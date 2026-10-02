@@ -48,26 +48,29 @@ export const TUTORIAL: readonly TutorialPuzzle[] = [
  * 「1個だけ揃っていないとき」の定石。空きマスは真ん中(4)。
  * サイコロが空きの左隣(3)か左斜め上(0)にあり、その1の目がどちらを向いているかで分ける。
  * 盤を回したり裏返したりした形にも、手順の向きを同じように回せばそのまま使える。
+ *   moves       … 全部1にする手順(最後の空きマスの位置は問わない)
+ *   movesReturn … 全部1にして、最後に空きマスが真ん中へ戻る手順(ずれたサイコロを1個ずつ続けて直せる)
  */
 export interface OneOffFormula {
   cell: 3 | 0;
   dir: number;
   moves: string;
+  movesReturn: string;
 }
 
 export const ONE_OFF_BLANK = 4;
 
 export const ONE_OFF_FORMULAS: readonly OneOffFormula[] = [
-  { cell: 3, dir: WEST, moves: 'R' },
-  { cell: 3, dir: NORTH, moves: 'RULLDRULDRURD' },
-  { cell: 3, dir: SOUTH, moves: 'RDLLURDLURDRU' },
-  { cell: 3, dir: BOTTOM, moves: 'RDLLUURDLURDLDRRU' },
-  { cell: 3, dir: EAST, moves: 'RDLLUURDLURDLURDLDRRULUL' },
-  { cell: 0, dir: NORTH, moves: 'RULDRULDRD' },
-  { cell: 0, dir: WEST, moves: 'DLURDLURDR' },
-  { cell: 0, dir: BOTTOM, moves: 'LDRULDRULDRRULDLURRD' },
-  { cell: 0, dir: SOUTH, moves: 'DRULLDRULDRULDRRULDLU' },
-  { cell: 0, dir: EAST, moves: 'RDLUURDLURDLURDDLURUL' },
+  { cell: 3, dir: WEST, moves: 'R', movesReturn: 'DRULDRUL' },
+  { cell: 3, dir: NORTH, moves: 'RULLDRULDRURD', movesReturn: 'RULLDRULDRURDLURDLURDL' },
+  { cell: 3, dir: SOUTH, moves: 'RDLLURDLURDRU', movesReturn: 'RDLLURDLURDRULDRULDRUL' },
+  { cell: 3, dir: BOTTOM, moves: 'RDLLUURDLURDLDRRU', movesReturn: 'RDLLUURDLURDLDRRULDRULDRUL' },
+  { cell: 3, dir: EAST, moves: 'RDLLUURDLURDLURDLDRRULUL', movesReturn: 'DLURRDLULDRRUULLDDRULURRDL' },
+  { cell: 0, dir: NORTH, moves: 'RULDRULDRD', movesReturn: 'DRULDRULURDLURDDLURDLU' },
+  { cell: 0, dir: WEST, moves: 'DLURDLURDR', movesReturn: 'RDLURDLULDRULDRRULDRUL' },
+  { cell: 0, dir: BOTTOM, moves: 'LDRULDRULDRRULDLURRD', movesReturn: 'LURDLURDLURRDLDRULDRUULLDR' },
+  { cell: 0, dir: SOUTH, moves: 'DRULLDRULDRULDRRULDLU', movesReturn: 'LDRULDRULDRURDLURDLLUR' },
+  { cell: 0, dir: EAST, moves: 'RDLUURDLURDLURDDLURUL', movesReturn: 'URDLURDLURDLDRULDRUULD' },
 ];
 
 function boardWith(blank: number, off: ReadonlyArray<readonly [number, number]>): Board {

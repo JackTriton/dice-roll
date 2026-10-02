@@ -89,6 +89,11 @@ export const en: Messages = {
   tipsTitle: 'When only one die is off',
   tipsNote:
     'Sequences for when the empty cell is in the middle. Rotate or mirror the arrows to use them in other orientations. Tap a board to play it.',
+  tipsModeSolve: 'Just solve',
+  tipsModeReturn: 'Gap back to middle',
+  tipsModeSolveNote: 'Makes every die show 1. Where the gap ends up depends on the case.',
+  tipsModeReturnNote:
+    'Makes every die show 1 and brings the gap back to the middle, so you can fix several off dice one after another.',
   tipsPosLeft: 'Left of the gap',
   tipsPosDiag: 'Up-left of the gap',
   tipsCase: '{pos}, 1 faces {dir}',

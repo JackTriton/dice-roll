@@ -166,6 +166,15 @@
         <section class="tips" aria-labelledby="tips-title">
           <h3 id="tips-title" data-i18n="tipsTitle">1個だけ揃っていないとき</h3>
           <p class="note" data-i18n="tipsNote"></p>
+          <div class="size-select" role="tablist" id="tips-mode">
+            <button type="button" role="tab" data-mode="solve" data-i18n="tipsModeSolve">
+              そのまま揃える
+            </button>
+            <button type="button" role="tab" data-mode="return" data-i18n="tipsModeReturn">
+              空きを真ん中に戻す
+            </button>
+          </div>
+          <p class="note" id="tips-mode-note"></p>
           <div class="tips-grid" id="tips-grid"></div>
         </section>
       </section>

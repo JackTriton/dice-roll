@@ -60,6 +60,13 @@ test.describe('game', () => {
     page.on('pageerror', (e) => errors.push(e.message));
     await tips.nth(5).click();
     await page.waitForTimeout(1500);
+    // 「空きを真ん中に戻す」に切り替えると、最後に空きが真ん中へ戻る手順になる
+    await page.click('#tips-mode [data-mode="return"]');
+    await expect(tips.first()).toContainText('8手');
+    await expect(tips.first()).toContainText('↓→↑←↓→↑←');
+    await expect(page.locator('#tips-mode-note')).toContainText('真ん中へ戻る');
+    await tips.first().click();
+    await page.waitForTimeout(1000);
     expect(errors).toEqual([]);
   });
 

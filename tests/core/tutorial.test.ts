@@ -28,4 +28,13 @@ describe('tutorial answers and one-off formulas', () => {
       expect(solvesExactly(b, f.moves)).toBe(true);
     }
   });
+
+  it('every return formula ends with all ones up and the gap back in the middle', () => {
+    for (const f of ONE_OFF_FORMULAS) {
+      const b = formulaBoard(f);
+      for (const m of f.movesReturn) expect(applyMove(b, m as Move)).toBe(true);
+      expect(isSolved(b)).toBe(true);
+      expect(b.blank).toBe(4);
+    }
+  });
 });

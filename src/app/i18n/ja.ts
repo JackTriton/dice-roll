@@ -86,6 +86,11 @@ export const ja = {
   tipsTitle: '1個だけ揃っていないとき',
   tipsNote:
     '空きマスが真ん中にある場合の手順です。盤を回したり裏返したりした形でも、矢印を同じように回せば使えます。盤面をタップすると再生します。',
+  tipsModeSolve: 'そのまま揃える',
+  tipsModeReturn: '空きを真ん中に戻す',
+  tipsModeSolveNote: '全部1にする手順です。終わったときの空きマスの位置は形によって違います。',
+  tipsModeReturnNote:
+    '全部1にして、最後に空きマスが真ん中へ戻る手順です。ずれたサイコロが何個あっても、1個ずつ続けて直せます。',
   tipsPosLeft: '空きの左隣',
   tipsPosDiag: '空きの左斜め上',
   tipsCase: '{pos}・1が{dir}',

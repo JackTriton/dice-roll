@@ -53,14 +53,17 @@ function source(blank: number, m: Move): number {
   }
 }
 
-/** 全状態の最短手数の表を BFS で作る(手元の Node で約1分) */
-export function buildDist3(): Uint8Array {
+/**
+ * 全状態の最短手数の表を BFS で作る(手元の Node で十数秒)。
+ * goalBlanks: ゴールとする空きマスの位置(既定はどこでもよい。[4] なら「空きが真ん中で全部1」)
+ */
+export function buildDist3(goalBlanks: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8]): Uint8Array {
   const dist = new Uint8Array(STATES3).fill(255);
   const queue = new Uint32Array(STATES3);
   let head = 0;
   let tail = 0;
   const dirs = new Int8Array(9);
-  for (let b = 0; b < 9; b++) {
+  for (const b of goalBlanks) {
     dirs.fill(TOP);
     const s = encode(b, dirs);
     dist[s] = 0;
