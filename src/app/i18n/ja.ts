@@ -40,6 +40,7 @@ export const ja = {
   skip: '載せない',
   submitting: '送信しています…',
   submitFailed: '送信できませんでした。通信の状態を確かめてください',
+  submitError: '送信できませんでした({code})',
   rankingPaused: 'ランキングは一時停止中です',
   rejected: '記録を受け付けられませんでした({reason})',
   again: 'もう一度',

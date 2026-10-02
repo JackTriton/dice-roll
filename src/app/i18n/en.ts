@@ -42,6 +42,7 @@ export const en: Messages = {
   skip: 'Skip',
   submitting: 'Submitting…',
   submitFailed: "Couldn't submit. Please check your connection.",
+  submitError: "Couldn't submit ({code}).",
   rankingPaused: 'The ranking is paused right now.',
   rejected: 'The time was not accepted ({reason}).',
   again: 'Again',

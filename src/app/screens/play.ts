@@ -328,16 +328,33 @@ async function submit(s: Session, log: SolveLog, timeMs: number): Promise<void> 
     rank.textContent = t('rejected', { reason: t(`rejectReason_${local.reason}` as MessageKey) });
     return;
   }
+  // 端末のニックネームも添える。サーバーに未登録なら(ランキングにつなぐ前に設定で保存した場合など)その場で登録される
+  const store = load();
   const r = await submitSolve({
-    deviceId: load().deviceId,
+    deviceId: store.deviceId,
     scrambleId: s.info.scrambleId,
     moves: log.moves,
     times: log.times,
     timeMs,
+    nickname: store.nickname ?? undefined,
   });
   if (session !== s) return;
   if (!r.ok) {
-    rank.textContent = r.status === 503 ? t('rankingPaused') : t('submitFailed');
+    if (r.error === 'nickname_required' || r.error === 'invalid_nickname') {
+      // ニックネームを入れ直してもらう(問題はまだ使われていないので、そのまま送り直せる)
+      if (r.error === 'invalid_nickname') save((st) => (st.nickname = null));
+      rank.hidden = true;
+      $<HTMLInputElement>('nick-input').value = '';
+      $('nick-form').hidden = false;
+      if (r.error === 'invalid_nickname') toast(t('invalidNickname'));
+      return;
+    }
+    rank.textContent =
+      r.status === 503
+        ? t('rankingPaused')
+        : r.status === 0
+          ? t('submitFailed')
+          : t('submitError', { code: `${r.status} ${r.error}` });
     return;
   }
   const d = r.data;

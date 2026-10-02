@@ -120,6 +120,23 @@ describe('ranking API', () => {
     expect(used.used).toBe(0);
   });
 
+  it('registers the nickname sent with a solve when the device is not registered yet', async () => {
+    const issued = await s.call('POST', '/api/v1/scramble', { deviceId: DEV_A, size: 3 });
+    const times = timesFor(s.puzzle.solution.length);
+    s.advance(times[times.length - 1] + 2000);
+    const r = await s.call('POST', '/api/v1/submit', {
+      deviceId: DEV_A,
+      scrambleId: issued.body.scrambleId,
+      moves: s.puzzle.solution,
+      times,
+      timeMs: times[times.length - 1],
+      nickname: 'はなこ',
+    });
+    expect(r.body).toMatchObject({ accepted: true, rank: 1 });
+    const ranking = await s.call('GET', '/api/v1/ranking?size=3');
+    expect((ranking.body.entries as { nickname: string }[])[0].nickname).toBe('はなこ');
+  });
+
   it('accepts a valid solve and ranks it', async () => {
     await s.call('PUT', '/api/v1/profile', { deviceId: DEV_A, nickname: 'たろう' });
     const r = await solveOnce();

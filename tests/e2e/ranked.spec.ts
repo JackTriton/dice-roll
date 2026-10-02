@@ -28,6 +28,31 @@ test('a ranked solve is verified by the server and appears on the ranking', asyn
   await expect(page.locator('#ranking-me')).toContainText('あなたの順位');
 });
 
+test('a nickname saved only on the device is registered when the solve is submitted', async ({ page }) => {
+  await openApp(page);
+  // ランキングにつなぐ前の版で、設定からニックネームを保存した状態を再現する
+  const nick = `端末${Math.floor(Math.random() * 1000)}`;
+  await page.evaluate((n) => {
+    const st = JSON.parse(localStorage.getItem('diceroll.v1')!);
+    st.nickname = n;
+    localStorage.setItem('diceroll.v1', JSON.stringify(st));
+  }, nick);
+  await page.reload();
+  await page.waitForTimeout(2500); // 先読みと発行間隔(2秒)が重ならないように
+  await page.click('#btn-start');
+  await expect(page.locator('#play-mode')).toHaveText('ランキング');
+  const s = await session(page);
+  for (const m of solutionFor(s!.scramble)) {
+    await page.keyboard.press(KEY[m]);
+    await page.waitForTimeout(80);
+  }
+  await expect(page.locator('#result-rank')).toContainText(/ランキング \d+位/);
+  await expect(page.locator('#nick-form')).toBeHidden();
+  await page.click('#btn-to-title');
+  await page.click('#btn-ranking');
+  await expect(page.locator('#ranking-list li.me')).toContainText(nick);
+});
+
 test('a tampered submission is rejected by the server', async ({ page, request }) => {
   await openApp(page);
   const deviceId = await page.evaluate(
