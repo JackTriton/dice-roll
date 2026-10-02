@@ -12,8 +12,8 @@ ALLOWED_ORIGINS = "https://ikaosu.github.io"
 [[d1_databases]]
 binding = "DB"
 database_name = "dice-roll"
-# `npx wrangler d1 create dice-roll` で表示された ID に置き換える
-database_id = "00000000-0000-0000-0000-000000000000"
+# `npx wrangler d1 create dice-roll` で作ったデータベースの ID
+database_id = "652f0287-a55c-4a4a-8866-07a472511796"
 migrations_dir = "migrations"
 
 # 1日1回、古い発行記録と拒否記録を消す(UTC 3:17)
