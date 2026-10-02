@@ -1,5 +1,3 @@
-import { DARK_PALETTE, LIGHT_PALETTE, type BoardPalette } from '../render/boardView.ts';
-
 export function $<T extends HTMLElement = HTMLElement>(id: string): T {
   const el = document.getElementById(id);
   if (!el) throw new Error(`#${id} not found`);
@@ -32,8 +30,3 @@ export function toast(message: string): void {
   clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => (el.hidden = true), 2200);
 }
-
-export const prefersDark = (): boolean =>
-  window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-
-export const boardPalette = (): BoardPalette => (prefersDark() ? DARK_PALETTE : LIGHT_PALETTE);

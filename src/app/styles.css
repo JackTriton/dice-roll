@@ -8,20 +8,7 @@
   --line: #e2d8c8;
   --btn: #ece4d6;
   --done: #2e8b57;
-  color-scheme: light dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1f26;
-    --surface: #262a33;
-    --text: #ece8e1;
-    --muted: #a39d93;
-    --accent: #ff4d63;
-    --accent-text: #1c1f26;
-    --line: #3a3f4b;
-    --btn: #323743;
-    --done: #5fd38f;
-  }
+  color-scheme: light;
 }
 
 * {

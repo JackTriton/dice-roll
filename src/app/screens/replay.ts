@@ -11,7 +11,7 @@ import {
 } from '../../video/frames.ts';
 import { formatTime } from '../game/session.ts';
 import { t } from '../i18n/index.ts';
-import { LIGHT_PALETTE } from '../render/boardView.ts';
+import { BOARD_PALETTE } from '../render/boardView.ts';
 import { ReplayTimeline } from '../render/frame.ts';
 import { shareResult, shareText, siteUrl } from '../share.ts';
 import { $, onLeave, showScreen, toast } from '../ui/dom.ts';
@@ -65,7 +65,7 @@ function play(log: SolveLog, meta: ResultMeta): void {
   cancelAnimationFrame(raf);
   const step = (now: number) => {
     const v = Math.min(now - t0, plan.durationMs);
-    drawVideoFrame(ctx, css, plan, fm, v, LIGHT_PALETTE, VIDEO_COLORS, dpr);
+    drawVideoFrame(ctx, css, plan, fm, v, BOARD_PALETTE, VIDEO_COLORS, dpr);
     if (v < plan.durationMs) raf = requestAnimationFrame(step);
   };
   raf = requestAnimationFrame(step);
@@ -142,7 +142,7 @@ async function make(plan: VideoPlan, meta: ResultMeta, method: VideoMethod) {
       method,
       plan,
       meta: frameMeta(meta),
-      palette: LIGHT_PALETTE,
+      palette: BOARD_PALETTE,
       signal,
       onProgress: (r) => {
         if (!signal.aborted)

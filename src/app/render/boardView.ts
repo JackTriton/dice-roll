@@ -11,7 +11,8 @@ export interface BoardPalette extends Palette {
   cellDone: string;
 }
 
-export const LIGHT_PALETTE: BoardPalette = {
+/** 盤とサイコロの配色(明るい配色だけ。ダークモードはやらない) */
+export const BOARD_PALETTE: BoardPalette = {
   board: '#d9cdb8',
   cell: '#e9e0cf',
   cellDone: '#f6d7a6',
@@ -22,19 +23,6 @@ export const LIGHT_PALETTE: BoardPalette = {
   pip: '#23201c',
   pipOne: '#d4102a',
   shadow: 'rgba(60, 40, 20, 0.18)',
-};
-
-export const DARK_PALETTE: BoardPalette = {
-  board: '#2b2f38',
-  cell: '#3a3f4b',
-  cellDone: '#6b5228',
-  face: '#fbf8f1',
-  faceDone: '#ffe9b8',
-  faceSide: '#cfc8bb',
-  edge: '#8e877c',
-  pip: '#1d1b18',
-  pipOne: '#e0142f',
-  shadow: 'rgba(0, 0, 0, 0.35)',
 };
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -106,7 +94,7 @@ export class BoardView {
   private ctx: CanvasRenderingContext2D;
   private cssSize = 0;
   private dpr = 1;
-  palette: BoardPalette = LIGHT_PALETTE;
+  palette: BoardPalette = BOARD_PALETTE;
 
   readonly canvas: HTMLCanvasElement;
 

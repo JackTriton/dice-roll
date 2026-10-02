@@ -18,7 +18,7 @@ import { BoardView } from '../render/boardView.ts';
 import { LiveAnimator } from '../render/frame.ts';
 import { shareResult, shareText } from '../share.ts';
 import { toArrows } from '../ui/arrows.ts';
-import { $, activeScreen, boardPalette, onLeave, showScreen, toast } from '../ui/dom.ts';
+import { $, activeScreen, onLeave, showScreen, toast } from '../ui/dom.ts';
 
 export interface PlayNav {
   title(): void;
@@ -151,7 +151,6 @@ function resetUi(info: SessionInfo) {
 function begin(info: SessionInfo, board: Board) {
   session = new Session(info, board);
   animator = new LiveAnimator(board);
-  view.palette = boardPalette();
   resetUi(info);
   view.resize();
   startLoop();

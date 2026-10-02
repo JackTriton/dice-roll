@@ -4,11 +4,11 @@ import { encodeBoard } from '../../core/board.ts';
 import { BOTTOM, EAST, NORTH, ONE_DIR, SOUTH, WEST } from '../../core/dice.ts';
 import { ONE_OFF_FORMULAS, formulaBoard, type OneOffFormula } from '../../core/tutorial.ts';
 import { t, type MessageKey } from '../i18n/index.ts';
-import { drawBoard } from '../render/boardView.ts';
+import { BOARD_PALETTE, drawBoard } from '../render/boardView.ts';
 import { drawDie } from '../render/dieRenderer.ts';
 import { ReplayTimeline } from '../render/frame.ts';
 import { toArrows } from '../ui/arrows.ts';
-import { $, boardPalette, onLeave, showScreen } from '../ui/dom.ts';
+import { $, onLeave, showScreen } from '../ui/dom.ts';
 
 let raf = 0;
 const tipRafs = new Map<HTMLCanvasElement, number>();
@@ -96,7 +96,7 @@ function drawTip(canvas: HTMLCanvasElement, f: OneOffFormula, ms: number, timeli
   if (canvas.width !== px) canvas.width = canvas.height = px;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, css, css);
-  drawBoard(ctx, 0, 0, css, timeline.frameAt(ms), boardPalette());
+  drawBoard(ctx, 0, 0, css, timeline.frameAt(ms), BOARD_PALETTE);
 }
 
 function playTip(canvas: HTMLCanvasElement, f: OneOffFormula): void {
@@ -124,7 +124,7 @@ function animateDemo(): void {
   const h = w / 2;
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
-  const palette = boardPalette();
+  const palette = BOARD_PALETTE;
   const start = ONE_DIR.indexOf(WEST);
   const t0 = performance.now();
   const period = 3200;
