@@ -1,0 +1,48 @@
+{
+  "name": "dice-roll",
+  "private": true,
+  "version": "0.1.0",
+  "description": "サイコロ8パズル — 転がして、全部1にするタイムアタック",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node tools/check-bundle-size.ts",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && tsc -p tsconfig.api.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "build:table": "node tools/build-dist3.ts",
+    "build:pools": "node tools/build-pools.ts",
+    "check:solvable": "node tools/check-solvable.ts",
+    "check:tutorial": "node tools/check-tutorial.ts",
+    "make:assets": "node tools/make-assets.ts",
+    "db:migrate:local": "wrangler d1 migrations apply dice-roll --local -c api/wrangler.toml",
+    "db:migrate:remote": "wrangler d1 migrations apply dice-roll --remote -c api/wrangler.toml",
+    "dev:api": "node tools/build-pools.ts --server-only && wrangler dev -c api/wrangler.toml",
+    "deploy:api": "node tools/build-pools.ts --server-only && wrangler deploy -c api/wrangler.toml"
+  },
+  "dependencies": {
+    "mediabunny": "^1.61.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261002.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.19.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vite": "^8.3.2",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^5.0.3",
+    "workbox-window": "^7.4.1",
+    "wrangler": "^4.146.0"
+  }
+}

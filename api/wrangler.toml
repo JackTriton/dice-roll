@@ -1,0 +1,27 @@
+# ランキング API(Cloudflare Workers + D1、無料プラン)
+# セットアップ手順は README の「ランキング API を公開する」を参照。
+name = "dice-roll-api"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+
+# 許可するオリジン(GitHub Pages の URL)。カンマ区切り。
+# 手元の開発(wrangler dev)では api/.dev.vars の値で上書きされる
+[vars]
+ALLOWED_ORIGINS = "https://ikaosu.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dice-roll"
+# `npx wrangler d1 create dice-roll` で表示された ID に置き換える
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# 1日1回、古い発行記録と拒否記録を消す(UTC 3:17)
+[triggers]
+crons = ["17 3 * * *"]
+
+# 問題プール(.bin)を ArrayBuffer として読み込む
+[[rules]]
+type = "Data"
+globs = ["**/*.bin"]
+fallthrough = false

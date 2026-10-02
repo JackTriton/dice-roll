@@ -1,0 +1,10 @@
+node_modules/
+dist/
+tools/.cache/
+api/data/pool3-server.bin
+**/.wrangler/
+test-results/
+playwright-report/
+*.local
+.env
+dist-e2e/

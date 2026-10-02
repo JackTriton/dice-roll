@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1f26" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="description"
+      content="転がして、全部1に。サイコロのスライドパズルのタイムアタック。 / Roll every die to show 1 — a dice sliding puzzle time attack."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="サイコロ8パズル / Dice Roll 8" />
+    <meta property="og:description" content="転がして、全部1に。 Roll every die to show 1." />
+    <meta property="og:image" content="og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>サイコロ8パズル</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- タイトル -->
+      <section id="screen-title" class="screen">
+        <div class="title-hero">
+          <canvas id="title-dice" class="title-dice" aria-hidden="true"></canvas>
+          <h1 data-i18n="appName">サイコロ8パズル</h1>
+          <p class="tagline" data-i18n="tagline">転がして、全部1に。</p>
+        </div>
+        <div class="size-select" role="radiogroup">
+          <button type="button" role="radio" data-size="3" data-i18n="size3">3×3(8個)</button>
+          <button type="button" role="radio" data-size="4" data-i18n="size4">4×4(15個)</button>
+        </div>
+        <button type="button" id="btn-start" class="btn primary big" data-i18n="start">スタート</button>
+        <dl class="stats" id="title-stats">
+          <div>
+            <dt data-i18n="best">ベスト</dt>
+            <dd id="stat-best">—</dd>
+          </div>
+          <div>
+            <dt data-i18n="ao5">5回平均</dt>
+            <dd id="stat-ao5">—</dd>
+          </div>
+          <div>
+            <dt data-i18n="solves">解いた回数</dt>
+            <dd id="stat-count">0</dd>
+          </div>
+        </dl>
+        <p class="note" id="title-note" hidden></p>
+        <nav class="title-links">
+          <button type="button" class="btn ghost" id="btn-howto" data-i18n="howto">遊び方</button>
+          <button type="button" class="btn ghost" id="btn-ranking" data-i18n="ranking">ランキング</button>
+          <button type="button" class="btn ghost" id="btn-settings" data-i18n="settings">設定</button>
+        </nav>
+      </section>
+
+      <!-- プレイ -->
+      <section id="screen-play" class="screen" hidden>
+        <header class="play-bar">
+          <button type="button" class="btn small ghost" id="btn-retire" data-i18n="retire">やめる</button>
+          <span class="badge" id="play-mode"></span>
+          <span class="play-size" id="play-size"></span>
+        </header>
+        <div class="timer" id="timer">0.00</div>
+        <div class="play-sub"><span id="play-moves">0手</span></div>
+        <p class="play-hint" id="play-hint"></p>
+        <div class="board-wrap" id="board-wrap">
+          <canvas id="board" class="board"></canvas>
+        </div>
+        <div class="tutorial-bar" id="tutorial-bar" hidden>
+          <button type="button" class="btn small ghost" id="btn-tut-retry" data-i18n="retry">やり直す</button>
+          <button type="button" class="btn small ghost" id="btn-tut-answer" data-i18n="showAnswer">
+            答えを見る
+          </button>
+          <button type="button" class="btn small" id="btn-tut-next" data-i18n="next" hidden>次へ</button>
+          <button type="button" class="btn small ghost" id="btn-tut-skip" data-i18n="skipTutorial">
+            とばす
+          </button>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="result-title">
+            <h2 id="result-title" data-i18n="solved">クリア!</h2>
+            <p class="result-time" id="result-time"></p>
+            <p class="result-detail" id="result-detail"></p>
+            <p class="result-flag" id="result-flag" hidden></p>
+            <p class="result-rank" id="result-rank" hidden></p>
+            <p class="note" id="result-note" hidden></p>
+            <form class="nick-form" id="nick-form" hidden>
+              <label for="nick-input" data-i18n="nicknamePrompt">ランキングに載せますか?</label>
+              <input
+                id="nick-input"
+                maxlength="24"
+                autocomplete="nickname"
+                data-i18n-placeholder="nicknamePlaceholder"
+              />
+              <div class="row">
+                <button type="submit" class="btn primary small" data-i18n="submit">載せる</button>
+                <button type="button" class="btn ghost small" id="btn-nick-skip" data-i18n="skip">
+                  載せない
+                </button>
+              </div>
+            </form>
+            <div class="result-actions">
+              <button type="button" class="btn primary" id="btn-again" data-i18n="again">もう一度</button>
+              <button type="button" class="btn" id="btn-share" data-i18n="share">共有</button>
+              <button type="button" class="btn" id="btn-replay" data-i18n="replay">リプレイ</button>
+              <button type="button" class="btn" id="btn-video" data-i18n="saveVideo">動画を保存</button>
+              <button type="button" class="btn ghost" id="btn-to-title" data-i18n="toTitle">
+                タイトルへ
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- リプレイ -->
+      <section id="screen-replay" class="screen" hidden>
+        <header class="page-bar">
+          <button type="button" class="btn small ghost" id="btn-replay-back" data-i18n="back">戻る</button>
+          <h2 data-i18n="replay">リプレイ</h2>
+          <span></span>
+        </header>
+        <canvas id="replay-canvas" class="replay-canvas"></canvas>
+        <div class="row center">
+          <button type="button" class="btn" id="btn-replay-again" data-i18n="replay">リプレイ</button>
+          <button type="button" class="btn" id="btn-replay-video" data-i18n="saveVideo">動画を保存</button>
+        </div>
+      </section>
+
+      <!-- ランキング -->
+      <section id="screen-ranking" class="screen" hidden>
+        <header class="page-bar">
+          <button type="button" class="btn small ghost" id="btn-ranking-back" data-i18n="back">戻る</button>
+          <h2 data-i18n="rankingTitle">ランキング</h2>
+          <span></span>
+        </header>
+        <div class="size-select" role="tablist" id="ranking-tabs">
+          <button type="button" role="tab" data-size="3" data-i18n="sizeShort3">3×3</button>
+          <button type="button" role="tab" data-size="4" data-i18n="sizeShort4">4×4</button>
+        </div>
+        <p class="note" id="ranking-me"></p>
+        <ol class="ranking-list" id="ranking-list"></ol>
+        <p class="note" id="ranking-status" hidden></p>
+      </section>
+
+      <!-- 遊び方 -->
+      <section id="screen-howto" class="screen" hidden>
+        <header class="page-bar">
+          <button type="button" class="btn small ghost" id="btn-howto-back" data-i18n="back">戻る</button>
+          <h2 data-i18n="howtoTitle">遊び方</h2>
+          <span></span>
+        </header>
+        <canvas id="howto-demo" class="howto-demo" aria-hidden="true"></canvas>
+        <ol class="rules">
+          <li data-i18n="rule1"></li>
+          <li data-i18n="rule2"></li>
+          <li data-i18n="rule3"></li>
+          <li data-i18n="rule4"></li>
+          <li data-i18n="rule5"></li>
+          <li data-i18n="rule6"></li>
+        </ol>
+        <button type="button" class="btn primary" id="btn-tutorial" data-i18n="tutorialStart">
+          練習問題をやってみる
+        </button>
+        <section class="tips" aria-labelledby="tips-title">
+          <h3 id="tips-title" data-i18n="tipsTitle">1個だけ揃っていないとき</h3>
+          <p class="note" data-i18n="tipsNote"></p>
+          <div class="tips-grid" id="tips-grid"></div>
+        </section>
+      </section>
+
+      <!-- 設定 -->
+      <section id="screen-settings" class="screen" hidden>
+        <header class="page-bar">
+          <button type="button" class="btn small ghost" id="btn-settings-back" data-i18n="back">戻る</button>
+          <h2 data-i18n="settingsTitle">設定</h2>
+          <span></span>
+        </header>
+        <label class="field">
+          <span data-i18n="language">言語</span>
+          <select id="lang-select">
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <form class="field" id="settings-nick-form">
+          <span data-i18n="nickname">ニックネーム</span>
+          <div class="row">
+            <input
+              id="settings-nick"
+              maxlength="24"
+              autocomplete="nickname"
+              data-i18n-placeholder="nicknamePlaceholder"
+            />
+            <button type="submit" class="btn small" data-i18n="save">保存</button>
+          </div>
+          <span class="note" id="settings-nick-status"></span>
+        </form>
+        <p class="note"><span data-i18n="deviceId">端末ID</span>: <code id="device-id"></code></p>
+        <button type="button" class="btn ghost" id="btn-reset" data-i18n="resetRecords">
+          端末内の記録を消す
+        </button>
+      </section>
+
+      <!-- 動画 -->
+      <div class="result" id="video-dialog" hidden>
+        <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="video-title">
+          <h2 id="video-title" data-i18n="videoTitle">リプレイ動画</h2>
+          <p id="video-message"></p>
+          <progress id="video-progress" max="1" value="0" hidden></progress>
+          <div class="result-actions" id="video-actions"></div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+    <script type="module" src="/src/app/main.ts"></script>
+  </body>
+</html>

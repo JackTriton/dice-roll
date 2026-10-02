@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["src/core", "tools", "tests", "api/src", "vite.config.ts", "playwright.config.ts", "eslint.config.js"],
+  "exclude": ["api/src/worker.ts"]
+}
