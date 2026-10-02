@@ -8,11 +8,20 @@
       name="description"
       content="転がして、全部1に。サイコロのスライドパズルのタイムアタック。 / Roll every die to show 1 — a dice sliding puzzle time attack."
     />
+    <!-- SNS のリンクプレビュー。X などは画像とページを完全な URL で書かないと読まないので、
+         公開先の URL(VITE_SITE_URL、末尾は /)をビルド時に差し込む -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="%VITE_SITE_URL%" />
     <meta property="og:title" content="サイコロ8パズル / Dice Roll 8" />
     <meta property="og:description" content="転がして、全部1に。 Roll every die to show 1." />
-    <meta property="og:image" content="og.png" />
+    <meta property="og:image" content="%VITE_SITE_URL%og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="全部1になったサイコロの盤と「サイコロ8パズル」の題名" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="サイコロ8パズル / Dice Roll 8" />
+    <meta name="twitter:description" content="転がして、全部1に。 Roll every die to show 1." />
+    <meta name="twitter:image" content="%VITE_SITE_URL%og.png" />
     <link rel="icon" href="favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <title>サイコロ8パズル</title>

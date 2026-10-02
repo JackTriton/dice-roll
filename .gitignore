@@ -6,5 +6,4 @@ api/data/pool3-server.bin
 test-results/
 playwright-report/
 *.local
-.env
 dist-e2e/

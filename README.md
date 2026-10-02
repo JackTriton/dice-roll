@@ -85,6 +85,7 @@ npm run make:assets      # アイコンと OGP 画像を作り直す
    ```
 3. リポジトリの **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にします。
 4. **Actions** タブで「Deploy to GitHub Pages」が成功すると、`https://<ユーザー名>.github.io/dice-roll/` で遊べます。
+   SNS のリンクプレビュー(OGP)の画像とページの URL は、ビルドのときにこの公開 URL(GitHub Actions が自動で決める。手元のビルドでは `.env` の `VITE_SITE_URL`)から作ります。X は一度読んだプレビューをしばらく覚えているので、直したあとに古いプレビューが出る場合は、URL の末尾に `?v=2` などを付けて投稿すると読み直されます。
 
 この時点では、ランキングなし(練習専用)で動きます。
 

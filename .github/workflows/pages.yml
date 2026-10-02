@@ -33,6 +33,8 @@ jobs:
       - run: npm run build
         env:
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          # SNS のリンクプレビュー用の公開 URL(https://<ユーザー名>.github.io/<リポジトリ名>/)
+          VITE_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

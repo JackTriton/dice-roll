@@ -150,6 +150,15 @@ test.describe('game', () => {
     await expect(page.locator('#stat-best')).not.toHaveText('—');
   });
 
+  test('link-preview tags use absolute URLs (X ignores relative ones)', async ({ page }) => {
+    await page.goto('/');
+    for (const sel of ['meta[property="og:image"]', 'meta[name="twitter:image"]'])
+      expect(await page.locator(sel).getAttribute('content')).toMatch(/^https:\/\/[^%]+\/og\.png$/);
+    expect(await page.locator('meta[property="og:url"]').getAttribute('content')).toMatch(
+      /^https:\/\/[^%]+\/$/,
+    );
+  });
+
   test('language can be switched to English', async ({ page }) => {
     await page.goto('/');
     await page.click('#btn-settings');
