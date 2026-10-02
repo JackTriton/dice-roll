@@ -20,7 +20,6 @@ export interface Store {
   lang: Lang | null;
   nickname: string | null;
   size: Size;
-  howtoSeen: boolean;
   stats: Record<'3' | '4', SizeStats>;
 }
 
@@ -43,7 +42,6 @@ function freshStore(): Store {
     lang: null,
     nickname: null,
     size: 3,
-    howtoSeen: false,
     stats: { '3': emptyStats(), '4': emptyStats() },
   };
 }

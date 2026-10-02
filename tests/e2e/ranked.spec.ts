@@ -1,12 +1,12 @@
 // ランキングの通しテスト。ローカルの Worker(npm run dev:api)を立ててから、E2E_API を付けて実行する:
 //   E2E_API=http://localhost:8787 npx playwright test ranked
 import { expect, test } from '@playwright/test';
-import { KEY, session, skipHowto, solutionFor } from './helpers.ts';
+import { KEY, session, openApp, solutionFor } from './helpers.ts';
 
 test.skip(!process.env.E2E_API, 'E2E_API が無いのでランキングのテストは飛ばす');
 
 test('a ranked solve is verified by the server and appears on the ranking', async ({ page }) => {
-  await skipHowto(page);
+  await openApp(page);
   await page.click('#btn-start');
   await expect(page.locator('#play-mode')).toHaveText('ランキング');
   const s = await session(page);
@@ -29,7 +29,7 @@ test('a ranked solve is verified by the server and appears on the ranking', asyn
 });
 
 test('a tampered submission is rejected by the server', async ({ page, request }) => {
-  await skipHowto(page);
+  await openApp(page);
   const deviceId = await page.evaluate(
     () => JSON.parse(localStorage.getItem('diceroll.v1')!).deviceId as string,
   );

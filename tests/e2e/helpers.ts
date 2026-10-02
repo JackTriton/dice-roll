@@ -30,15 +30,9 @@ export const session = (page: Page) =>
     (window as unknown as { __dice: { session(): SessionSnapshot | null } }).__dice.session(),
   );
 
-/** 初回の「遊び方」を見たことにする */
-export async function skipHowto(page: Page): Promise<void> {
+/** アプリを開く */
+export async function openApp(page: Page): Promise<void> {
   await page.goto('/');
-  await page.evaluate(() => {
-    const s = JSON.parse(localStorage.getItem('diceroll.v1')!);
-    s.howtoSeen = true;
-    localStorage.setItem('diceroll.v1', JSON.stringify(s));
-  });
-  await page.reload();
 }
 
 /** 盤の中央から、方向 m へスワイプする(dist はマスの幅に対する割合) */

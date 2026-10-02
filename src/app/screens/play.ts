@@ -121,15 +121,9 @@ export function initPlay(n: PlayNav): void {
   $('btn-tut-answer').addEventListener('click', showTutorialAnswer);
   $('btn-tut-next').addEventListener('click', () => {
     if (tutorialIndex + 1 < TUTORIAL.length) startTutorial(tutorialIndex + 1);
-    else {
-      save((s) => (s.howtoSeen = true));
-      void startGame(load().size);
-    }
+    else void startGame(load().size);
   });
-  $('btn-tut-skip').addEventListener('click', () => {
-    save((s) => (s.howtoSeen = true));
-    void startGame(load().size);
-  });
+  $('btn-tut-skip').addEventListener('click', () => void startGame(load().size));
   onLeave('play', () => {
     clearAnswer();
     stopLoop();

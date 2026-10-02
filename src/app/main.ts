@@ -16,11 +16,8 @@ setLang(store.lang ?? detectLang(navigator.language));
 const toTitle = () => showTitle();
 
 initTitle({
-  start: (size) => {
-    // 初回は、遊び方を見てから始めてもらう
-    if (!load().howtoSeen) showHowto();
-    else void startGame(size);
-  },
+  // 初回でも遊び方は挟まず、すぐに始める(遊び方とチュートリアルはメニューから開ける)
+  start: (size) => void startGame(size),
   howto: showHowto,
   ranking: showRanking,
   settings: () => showSettings(getLang()),

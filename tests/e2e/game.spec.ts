@@ -1,15 +1,17 @@
 import { expect, test } from '@playwright/test';
-import { KEY, session, skipHowto, solutionFor, swipe } from './helpers.ts';
+import { KEY, session, openApp, solutionFor, swipe } from './helpers.ts';
 
 // ランキング API につないだビルド(E2E_API)では、練習モード前提のこのファイルは飛ばす
 test.skip(!!process.env.E2E_API, 'E2E_API のときは ranked.spec.ts で確かめる');
 
 test.describe('game', () => {
-  test('first start shows how to play, and the tutorial can be solved by swiping', async ({ page }) => {
+  test('the first start goes straight to the game; the tutorial is in how to play', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('h1')).toHaveText('サイコロ8パズル');
     await page.click('#btn-start');
-    await expect(page.locator('#screen-howto')).toBeVisible();
+    await expect(page.locator('#play-mode')).toHaveText('練習');
+    await page.click('#btn-retire');
+    await page.click('#btn-howto');
     await page.click('#btn-tutorial');
     await expect(page.locator('#play-mode')).toHaveText('チュートリアル');
     await swipe(page, 'R');
@@ -19,7 +21,7 @@ test.describe('game', () => {
 
   test('the timer does not start until the first roll, however long you wait', async ({ page }) => {
     await page.clock.install();
-    await skipHowto(page);
+    await openApp(page);
     await page.click('#btn-start');
     await expect(page.locator('#play-hint')).toHaveText('転がすとスタート');
     await page.clock.fastForward('00:20');
@@ -62,7 +64,7 @@ test.describe('game', () => {
   });
 
   test('swiping solves a board without scrolling or zooming the page', async ({ page }) => {
-    await skipHowto(page);
+    await openApp(page);
     await page.evaluate(() =>
       (window as never as { __dice: { start(s: string): void } }).__dice.start('aaad-aaaa'),
     );
@@ -76,7 +78,7 @@ test.describe('game', () => {
   });
 
   test('a continuous swipe rolls several dice in one gesture', async ({ page }) => {
-    await skipHowto(page);
+    await openApp(page);
     // 空きは右下。左へ連続スワイプすると、空きが左端まで移る(右へ転がる手が2回)
     await page.evaluate(() =>
       (window as never as { __dice: { start(s: string): void } }).__dice.start('abcdefgh-'),
@@ -92,7 +94,7 @@ test.describe('game', () => {
   });
 
   test('a full 3x3 practice solve with the keyboard records the time', async ({ page }) => {
-    await skipHowto(page);
+    await openApp(page);
     await page.click('#btn-start');
     await expect(page.locator('#play-mode')).toHaveText('練習');
     const s = await session(page);
@@ -111,7 +113,7 @@ test.describe('game', () => {
   });
 
   test('a 4x4 solve works too', async ({ page }) => {
-    await skipHowto(page);
+    await openApp(page);
     await page.click('[data-size="4"]');
     await page.click('#btn-start');
     const s = await session(page);
@@ -121,7 +123,7 @@ test.describe('game', () => {
   });
 
   test('leaving the app during a solve still records the time', async ({ page }) => {
-    await skipHowto(page);
+    await openApp(page);
     await page.click('#btn-start');
     const s = await session(page);
     const moves = solutionFor(s!.scramble);
@@ -152,7 +154,7 @@ test.describe('game', () => {
   });
 
   test('replay plays back a solve', async ({ page }) => {
-    await skipHowto(page);
+    await openApp(page);
     await page.evaluate(() =>
       (window as never as { __dice: { start(s: string): void } }).__dice.start('aaad-aaaa'),
     );
@@ -172,17 +174,7 @@ test('works offline after the first visit', async ({ page, context }) => {
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('h1')).toBeVisible();
-  await skipHowtoOffline(page);
   await page.click('#btn-start');
   await expect(page.locator('#play-mode')).toHaveText('練習');
   await context.setOffline(false);
 });
-
-async function skipHowtoOffline(page: import('@playwright/test').Page) {
-  await page.evaluate(() => {
-    const s = JSON.parse(localStorage.getItem('diceroll.v1')!);
-    s.howtoSeen = true;
-    localStorage.setItem('diceroll.v1', JSON.stringify(s));
-  });
-  await page.reload();
-}

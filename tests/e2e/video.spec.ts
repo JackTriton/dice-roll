@@ -5,12 +5,12 @@ import { expect, test } from '@playwright/test';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { ReplayTimeline } from '../../src/app/render/frame.ts';
 import { planVideo } from '../../src/video/frames.ts';
-import { KEY, session, skipHowto, solutionFor } from './helpers.ts';
+import { KEY, session, openApp, solutionFor } from './helpers.ts';
 
 test('saves a real-speed MP4 whose length matches the solve', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'デスクトップ(ダウンロードできる環境)だけで確かめる');
   test.setTimeout(90_000);
-  await skipHowto(page);
+  await openApp(page);
   await page.click('#btn-start');
   const s = await session(page);
   for (const m of solutionFor(s!.scramble)) {
