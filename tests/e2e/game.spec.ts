@@ -159,6 +159,15 @@ test.describe('game', () => {
     );
   });
 
+  test('settings shows the running version and can check for a newer one', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#btn-settings');
+    // 版は、ビルドした日時
+    await expect(page.locator('#app-version')).toHaveText(/20\d\d/);
+    await page.click('#btn-update-check');
+    await expect(page.locator('#update-status')).toHaveText('最新です');
+  });
+
   test('language can be switched to English', async ({ page }) => {
     await page.goto('/');
     await page.click('#btn-settings');

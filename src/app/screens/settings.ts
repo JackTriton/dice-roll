@@ -9,9 +9,29 @@ import { load, resetStats, save } from '../records.ts';
 import { BOARD_PALETTE, drawBoard } from '../render/boardView.ts';
 import type { OneFigure, SideMark } from '../render/dieRenderer.ts';
 import { $, showScreen, toast } from '../ui/dom.ts';
+import type { CheckResult } from '../update.ts';
 
-export function initSettings(back: () => void): void {
+/** いまの版と、最新版の確認(確認できない版 = 開発サーバーでは null) */
+export interface AppVersion {
+  build: string;
+  check: (() => Promise<CheckResult>) | null;
+}
+
+let version: AppVersion = { build: '', check: null };
+
+export function initSettings(back: () => void, app: AppVersion): void {
+  version = app;
   $('btn-settings-back').addEventListener('click', back);
+  $('btn-update-check').hidden = !app.check;
+  $('btn-update-check').addEventListener('click', async () => {
+    if (!app.check) return;
+    const status = $('update-status');
+    status.textContent = t('updateChecking');
+    const r = await app.check();
+    status.textContent = t(
+      r === 'latest' ? 'updateLatest' : r === 'unknown' ? 'updateUnknown' : 'updateSwitching',
+    );
+  });
   $<HTMLSelectElement>('lang-select').addEventListener('change', (e) => {
     const lang = (e.target as HTMLSelectElement).value as Lang;
     save((s) => (s.lang = lang));
@@ -85,6 +105,10 @@ export function showSettings(lang: Lang): void {
   $<HTMLInputElement>('settings-nick').value = s.nickname ?? '';
   $('settings-nick-status').textContent = '';
   $('device-id').textContent = s.deviceId.slice(0, 8);
+  // 版は、ビルドした日時で表す
+  const built = new Date(version.build);
+  $('app-version').textContent = Number.isNaN(built.getTime()) ? version.build : built.toLocaleString(lang);
+  $('update-status').textContent = '';
   showScreen('settings');
   if (HARD_MODE && LOOK_LAB) showLook();
 }

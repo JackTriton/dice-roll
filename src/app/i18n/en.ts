@@ -167,6 +167,12 @@ export const en: Messages = {
   resetRecords: 'Clear records on this device',
   resetConfirm: 'Clear all records on this device? (Ranking entries stay.)',
   deviceId: 'Device ID',
+  version: 'Version',
+  checkUpdate: 'Check for updates',
+  updateChecking: 'Checking…',
+  updateLatest: 'Up to date',
+  updateSwitching: 'Switching to the new version…',
+  updateUnknown: "Couldn't check. Please check your connection.",
   back: 'Back',
   close: 'Close',
 

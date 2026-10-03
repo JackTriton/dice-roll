@@ -285,6 +285,13 @@
           <canvas id="look-preview" class="look-preview" aria-hidden="true"></canvas>
         </section>
         <p class="note"><span data-i18n="deviceId">端末ID</span>: <code id="device-id"></code></p>
+        <p class="note row">
+          <span><span data-i18n="version">版</span>: <span id="app-version"></span></span>
+          <button type="button" class="btn small ghost" id="btn-update-check" data-i18n="checkUpdate">
+            最新版を確認
+          </button>
+          <span id="update-status" role="status"></span>
+        </p>
         <button type="button" class="btn ghost" id="btn-reset" data-i18n="resetRecords">
           端末内の記録を消す
         </button>

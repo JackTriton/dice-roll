@@ -1,6 +1,9 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
+/** 版の番号(ビルドした時刻、ISO 形式)。vite.config.ts で埋め込む */
+declare const __BUILD_ID__: string;
+
 interface ImportMetaEnv {
   /** ランキング API の URL(例: https://dice-roll-api.example.workers.dev)。空ならランキングを使わない */
   readonly VITE_API_BASE?: string;

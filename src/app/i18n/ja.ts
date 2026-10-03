@@ -160,6 +160,12 @@ export const ja = {
   resetRecords: '端末内の記録を消す',
   resetConfirm: '端末内の記録をすべて消しますか?(ランキングの記録は消えません)',
   deviceId: '端末ID',
+  version: '版',
+  checkUpdate: '最新版を確認',
+  updateChecking: '確かめています…',
+  updateLatest: '最新です',
+  updateSwitching: '新しい版に切り替えます…',
+  updateUnknown: '確かめられませんでした。通信の状態を確かめてください',
   back: '戻る',
   close: '閉じる',
 
