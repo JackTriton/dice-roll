@@ -45,10 +45,13 @@ export interface AppDeps {
 
 const RANKING_LIMIT = 100;
 const RANKING_CACHE_SECONDS = 60;
-const RETENTION_MS = 7 * 24 * 60 * 60_000;
+/** 発行した問題と拒否の記録を残す期間(問題の有効期限より長くする) */
+const RETENTION_MS = SCRAMBLE_TTL_MS + 24 * 60 * 60_000;
 /** 挑戦(attempts)を残す期間 */
 const ATTEMPT_RETENTION_MS = 90 * 24 * 60 * 60_000;
 const ADMIN_LIST_LIMIT = 200;
+/** 受け付けなかった挑戦で、手順まで残す手数の上限(大きな記録を送りつけて保存領域を埋められないように) */
+const REJECTED_KEEP_MOVES = 5000;
 const DEVICE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 class HttpError extends Error {
@@ -105,7 +108,8 @@ export function createApp(deps: AppDeps) {
 
   async function readJson(req: Request): Promise<Record<string, unknown>> {
     const text = await req.text();
-    if (text.length > 64 * 1024) throw new HttpError(413, 'too_large');
+    // 手数の上限(MAX_MOVES)いっぱいの記録が入る大きさ(1手あたり、手1文字 + 時刻 10文字ほど)
+    if (text.length > 1024 * 1024) throw new HttpError(413, 'too_large');
     try {
       const v = JSON.parse(text);
       if (v && typeof v === 'object') return v as Record<string, unknown>;
@@ -194,9 +198,13 @@ export function createApp(deps: AppDeps) {
     times: unknown,
     timeMs: unknown,
     reason: string | null,
+    /** 時刻の列を文字列にしたもの(受け付けた記録では、ベスト記録の保存と共用する) */
+    timesJson?: string,
   ) {
-    const okMoves = typeof moves === 'string' && moves.length <= MAX_MOVES ? moves : null;
-    const okTimes = Array.isArray(times) && times.length <= MAX_MOVES ? JSON.stringify(times) : null;
+    const limit = reason === null ? MAX_MOVES : REJECTED_KEEP_MOVES;
+    const okMoves = typeof moves === 'string' && moves.length <= limit ? moves : null;
+    const okTimes =
+      Array.isArray(times) && times.length <= limit ? (timesJson ?? JSON.stringify(times)) : null;
     await db
       .prepare(
         `INSERT INTO attempts (device_id, size, rule, scramble_id, scramble, optimal, moves, times, time_ms, accepted, reason, created_at)
@@ -275,7 +283,8 @@ export function createApp(deps: AppDeps) {
     if (!v.ok) return refuse(v.reason);
     // タイムは、問題を出してから記録を受け取るまでの実際の経過時間を超えられない
     if (v.timeMs > now - row.issued_at) return refuse('too_fast_wall');
-    await recordAttempt(deviceId, scrambleId, row, moves, times, timeMs, null);
+    const timesJson = JSON.stringify(times);
+    await recordAttempt(deviceId, scrambleId, row, moves, times, timeMs, null, timesJson);
 
     const prev = await db
       .prepare('SELECT time_ms FROM scores WHERE device_id = ? AND size = ? AND rule = ?')
@@ -299,7 +308,7 @@ export function createApp(deps: AppDeps) {
           v.moves,
           scrambleId,
           moves,
-          JSON.stringify(times),
+          timesJson,
           now,
           row.scramble,
           row.optimal,

@@ -9,14 +9,20 @@ export const SIZES: readonly Size[] = [3, 4];
 export type Rule = 'ones' | 'aligned';
 export const RULES: readonly Rule[] = ['ones', 'aligned'];
 
-/** サーバーが発行した問題の有効期限 */
-export const SCRAMBLE_TTL_MS = 30 * 60_000;
+/**
+ * サーバーが発行した問題の有効期限。実際のプレイでは届かない長さにしてある
+ * (30分だったころ、ハードを長い時間かけて解いた記録を送れなかった)
+ */
+export const SCRAMBLE_TTL_MS = 7 * 24 * 60 * 60_000;
 
 /** 1操作(同じ時刻の手のまとまり)あたりの平均間隔の下限。これより速い記録は受け付けない */
 export const MIN_AVG_GESTURE_MS = 60;
 
-/** 1回の記録で受け付ける手数の上限 */
-export const MAX_MOVES = 3000;
+/**
+ * 1回の記録で受け付ける手数の上限。実際のプレイでは届かない数にしてある(3000手だったころ、ハードの長い記録を
+ * 送れなかった)。サーバーが1回の検証に使える処理時間に収まる範囲で決めている
+ */
+export const MAX_MOVES = 50_000;
 
 /** 3×3 の問題プールに入れる最短手数の範囲と、1問あたりのバイト数 */
 export const POOL3 = { minOptimal: 24, maxOptimal: 34, entryBytes: 7 } as const;

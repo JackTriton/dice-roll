@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { decodeBoard, encodeBoard } from '../../src/core/board.ts';
+import { applyMove, decodeBoard, encodeBoard } from '../../src/core/board.ts';
 import { DEV_A, DEV_B, ORIGIN, setup, timesFor } from './fixtures.ts';
 
 describe('ranking API', () => {
@@ -136,9 +136,9 @@ describe('ranking API', () => {
     r = await s.call('POST', '/api/v1/submit', body(id));
     expect(r.body).toEqual({ accepted: false, reason: 'not_found' });
 
-    // 期限切れ(30分)
+    // 期限切れ(7日。実際のプレイでは届かない長さ)
     id = (await s.call('POST', '/api/v1/scramble', { deviceId: DEV_A, size: 3 })).body.scrambleId;
-    s.advance(31 * 60_000);
+    s.advance(7 * 24 * 60 * 60_000 + 60_000);
     r = await s.call('POST', '/api/v1/submit', body(id));
     expect(r.body).toEqual({ accepted: false, reason: 'expired' });
 
@@ -208,10 +208,73 @@ describe('ranking API', () => {
     expect(r.body.error).toBe('unavailable');
   });
 
+  it('accepts a solve that takes hours and thousands of moves', async () => {
+    await s.call('PUT', '/api/v1/profile', { deviceId: DEV_A, nickname: 'A' });
+    const issued = await s.call('POST', '/api/v1/scramble', { deviceId: DEV_A, size: 3 });
+    // 解答の前に「1手動かして戻す」を入れて、12,030手・約3時間20分の記録にする
+    const b = decodeBoard(issued.body.scramble as string)!;
+    const first = (['U', 'D', 'L', 'R'] as const).find((m) => applyMove(decodeBoard(encodeBoard(b))!, m))!;
+    const back = { U: 'D', D: 'U', L: 'R', R: 'L' }[first];
+    const moves = (first + back).repeat(6000) + s.puzzle.solution;
+    const times = timesFor(moves.length, 1000);
+    s.advance(times[times.length - 1] + 2000);
+    const r = await s.call('POST', '/api/v1/submit', {
+      deviceId: DEV_A,
+      scrambleId: issued.body.scrambleId,
+      moves,
+      times,
+      timeMs: times[times.length - 1],
+    });
+    expect(r.body).toMatchObject({ accepted: true, best: true, rank: 1 });
+    const row = s.db.raw.prepare('SELECT moves, length(solution) AS n, length(times) AS t FROM scores').get();
+    expect(row).toMatchObject({ moves: 12_030, n: 12_030 });
+    // 挑戦の記録にも、手順が残る
+    expect(s.db.raw.prepare('SELECT length(moves) AS n, accepted FROM attempts').get()).toEqual({
+      n: 12_030,
+      accepted: 1,
+    });
+  });
+
+  it('does not keep the moves of a long attempt it refused', async () => {
+    await s.call('PUT', '/api/v1/profile', { deviceId: DEV_A, nickname: 'A' });
+    const issued = await s.call('POST', '/api/v1/scramble', { deviceId: DEV_A, size: 3 });
+    const moves = 'UD'.repeat(4000);
+    const times = timesFor(moves.length, 1000);
+    s.advance(times[times.length - 1] + 2000);
+    const r = await s.call('POST', '/api/v1/submit', {
+      deviceId: DEV_A,
+      scrambleId: issued.body.scrambleId,
+      moves,
+      times,
+      timeMs: times[times.length - 1],
+    });
+    expect(r.body.accepted).toBe(false);
+    expect(s.db.raw.prepare('SELECT moves, times, accepted, time_ms FROM attempts').get()).toEqual({
+      moves: null,
+      times: null,
+      accepted: 0,
+      time_ms: times[times.length - 1],
+    });
+  });
+
+  it('refuses a request body that is far too large', async () => {
+    const r = await s.call('POST', '/api/v1/submit', {
+      deviceId: DEV_A,
+      scrambleId: 'x',
+      moves: 'U'.repeat(1_100_000),
+    });
+    expect(r.status).toBe(413);
+  });
+
   it('cleans up old rows', async () => {
     await s.call('POST', '/api/v1/scramble', { deviceId: DEV_A, size: 3 });
-    s.advance(8 * 24 * 60 * 60_000);
+    const count = () => (s.db.raw.prepare('SELECT COUNT(*) AS n FROM issued').get() as { n: number }).n;
+    // 有効期限(7日)の間は、発行した問題を消さない
+    s.advance(7 * 24 * 60 * 60_000);
     await s.app.cleanup();
-    expect((s.db.raw.prepare('SELECT COUNT(*) AS n FROM issued').get() as { n: number }).n).toBe(0);
+    expect(count()).toBe(1);
+    s.advance(2 * 24 * 60 * 60_000);
+    await s.app.cleanup();
+    expect(count()).toBe(0);
   });
 });

@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { alignedExample } from '../../src/core/aligned.ts';
 import {
   applyMove,
   cloneBoard,
   encodeBoard,
+  isGoal,
   isSolved,
   solvedBoard,
   type Board,
 } from '../../src/core/board.ts';
+import { MAX_MOVES } from '../../src/core/constants.ts';
 import { MOVES, OPPOSITE, type Move } from '../../src/core/dice.ts';
 import { randInt, seededRng } from '../../src/core/random.ts';
 import { DEFAULT_TIMING, boardAfter, scheduleGestures } from '../../src/core/replay.ts';
@@ -113,6 +116,76 @@ describe('verifySolve', () => {
         timeMs: t.at(-1)!,
       }).ok,
     ).toBe(true);
+  });
+});
+
+describe('verifySolve: long solves', () => {
+  /** 解答の前に「1手動かして戻す」を pairs 回入れて、長い解答にする(途中で揃わない) */
+  function padded(c: { scramble: Board; solution: Move[] }, pairs: number): Move[] {
+    const first = MOVES.find((m) => {
+      const b = cloneBoard(c.scramble);
+      return applyMove(b, m) && !isSolved(b);
+    })!;
+    const out: Move[] = [];
+    for (let i = 0; i < pairs; i++) out.push(first, OPPOSITE[first]);
+    return [...out, ...c.solution];
+  }
+  const submission = (scramble: Board, moves: Move[], step = 200) => {
+    const times = moves.map((_, i) => i * step);
+    return { scramble: encodeBoard(scramble), moves: moves.join(''), times, timeMs: times[times.length - 1] };
+  };
+
+  it('accepts a solve of many thousands of moves that takes hours', () => {
+    const c = makeCase(11);
+    const moves = padded(c, 10_000);
+    expect(moves.length).toBeGreaterThan(20_000);
+    const r = verifySolve(submission(c.scramble, moves, 700));
+    expect(r).toEqual({ ok: true, moves: moves.length, timeMs: (moves.length - 1) * 700 });
+    // 3時間半を超える
+    expect((moves.length - 1) * 700).toBeGreaterThan(3.5 * 60 * 60_000);
+  });
+
+  it('accepts up to MAX_MOVES and rejects more', () => {
+    const c = makeCase(12);
+    const pairs = (MAX_MOVES - c.solution.length) / 2;
+    expect(Number.isInteger(pairs)).toBe(true);
+    expect(verifySolve(submission(c.scramble, padded(c, pairs))).ok).toBe(true);
+    expect(verifySolve(submission(c.scramble, padded(c, pairs + 1)))).toEqual({
+      ok: false,
+      reason: 'bad_format',
+    });
+  });
+
+  it('judges every position the same way as checking the whole board after each move', () => {
+    // 揃ったかどうかを数え上げで判定しているので、盤全体を見直す判定(isGoal)と食い違わないことを確かめる
+    const rng = seededRng(99);
+    for (const rule of ['ones', 'aligned'] as const)
+      for (const size of [3, 4] as const)
+        for (let n = 0; n < 60; n++) {
+          // 揃った盤から数手だけ崩す(揃った盤を何度も通る、短い行き来を作るため)
+          const goal =
+            rule === 'aligned' ? alignedExample(size, 'done') : solvedBoard(size, randInt(rng, size * size));
+          const start = cloneBoard(goal);
+          for (let i = 0; i < 1 + randInt(rng, 3); i++) applyMove(start, MOVES[randInt(rng, 4)]);
+          if (isGoal(start, rule)) continue;
+          const b = cloneBoard(start);
+          const moves: Move[] = [];
+          // 揃うまで無作為に動かす(揃ったらそこで止める)。揃わなければ、揃わないまま終わる記録になる
+          for (let i = 0; i < 40 && !isGoal(b, rule); i++) {
+            const m = MOVES[randInt(rng, 4)];
+            if (applyMove(b, m)) moves.push(m);
+          }
+          if (moves.length === 0) continue;
+          const expected = isGoal(b, rule) ? { ok: true } : { ok: false, reason: 'not_solved' };
+          const r = verifySolve({ ...submission(start, moves, 300), rule });
+          expect(r, `${rule} ${size} ${encodeBoard(start)} ${moves.join('')}`).toMatchObject(expected);
+          // 揃ったあとにもう1手動かした記録は「途中で揃っていた」
+          if (isGoal(b, rule)) {
+            const extra = MOVES.find((m) => applyMove(cloneBoard(b), m))!;
+            const more = verifySolve({ ...submission(start, [...moves, extra], 300), rule });
+            expect(more).toEqual({ ok: false, reason: 'solved_early' });
+          }
+        }
   });
 });
 

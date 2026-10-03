@@ -143,17 +143,22 @@ export interface SolveOutcome {
 }
 
 /** 解き終えた記録を反映する */
+/** 端末にリプレイ(手順と時刻)まで残す手数の上限。これより長い記録は、タイムと手数だけを残す */
+export const REPLAY_KEEP_MOVES = 20_000;
+
 export function recordSolve(size: Size, log: SolveLog, timeMs: number): SolveOutcome {
   let outcome: SolveOutcome = { newBest: false, ao5: null, newBestAo5: false };
+  // 数万手の記録は1件で数百 KB になる。端末の保存領域(約 5MB)を使い切ると、ほかの記録も保存できなくなる
+  const replay = log.moves.length <= REPLAY_KEEP_MOVES ? log : null;
   save((s) => {
     const st = statsOf(s, log.rule ?? 'ones', size);
     st.count++;
-    st.lastReplay = log;
+    st.lastReplay = replay;
     const newBest = st.best === null || timeMs < st.best;
     if (newBest) {
       st.best = timeMs;
       st.bestMoves = log.moves.length;
-      st.bestReplay = log;
+      st.bestReplay = replay;
     }
     st.last5 = [...st.last5, timeMs].slice(-5);
     const ao5 = st.last5.length === 5 ? Math.round(st.last5.reduce((a, b) => a + b, 0) / 5) : null;
