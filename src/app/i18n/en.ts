@@ -3,6 +3,7 @@ import type { Messages } from './ja.ts';
 export const en: Messages = {
   appName: 'Dice Roll 8',
   tagline: 'Roll every die to show 1.',
+  taglineAligned: 'Roll every die to show 1 — standing upright.',
   size3: '3×3 (8 dice)',
   size4: '4×4 (15 dice)',
   sizeShort3: '3×3',
@@ -23,6 +24,11 @@ export const en: Messages = {
   modeTutorial: 'Tutorial',
   preparing: 'Preparing a puzzle…',
   readyHint: 'Roll a die to start the timer',
+  readyHintAligned: 'Every 1 on top, standing upright',
+  ruleOnes: 'Normal',
+  ruleOnesNote: 'All ones up',
+  ruleAligned: 'Hard',
+  ruleAlignedNote: 'Upright too',
   movesCount: '{n} moves',
   retire: 'Quit',
   retired: 'You quit this one',
@@ -103,6 +109,54 @@ export const en: Messages = {
   dirWest: 'left',
   dirEast: 'right',
   dirBottom: 'the bottom',
+
+  hardTitle: 'Hard: stand them upright',
+  hardRule1: 'You clear it when every die shows 1 on top and stands upright.',
+  hardRuleSide:
+    'Upright means the blue mark (the 2 face) is at the back (the top edge on screen). You are done when every blue mark is on the top edge.',
+  hardRuleTri:
+    "Upright means the triangle on the 1 points to the back (up on screen). Pointing sideways or down doesn't count.",
+  hardRuleTriRim:
+    'When the 1 is on the rim, a red triangle shows there too. Roll the 1 up and the triangle keeps pointing the same way.',
+  hardRuleTriSide:
+    'The side where the 2 face is has a blue mark. The triangle always points to the blue mark. When the 1 is underneath (6 on top), the blue mark tells you which way it faces.',
+  hardRuleTriBottom:
+    "When the 1 is underneath (6 on top), you can't see which way the triangle points. One roll shows it.",
+  hardRuleFigure:
+    "Upright means the picture on the 1 stands the right way up. Sideways or upside down doesn't count.",
+  hardRuleFigureRim:
+    'When the 1 is on the rim, a red triangle points to the top of the picture. Roll the 1 up and the picture faces the way the triangle pointed.',
+  hardRuleFigureBottom:
+    "When the 1 is underneath (6 on top), you can't see which way the picture faces. One roll shows it.",
+  hardRuleSideAlso: 'The 2 face has a blue mark too. The top of the picture is always on the blue side.',
+  hardRuleParity:
+    "With every 1 on top, two dice can still lie sideways (turned 90°). Move those two to swap places (a single die can't be turned 90° on its own).",
+  hardNotYet: 'Not yet (the two on the left lie sideways)',
+  hardDone: 'Solved',
+  hardTipsTitle: 'When every 1 is up and only the directions are off',
+  hardTipsNote:
+    'Example sequences for when the empty cell is in the middle (none of them can be made shorter). For the mirror image, swap left and right arrows. Tap a board to play it.',
+  hardTipsModeSolveNote: 'Stands every die upright. Where the gap ends up depends on the case.',
+  hardTipsModeReturnNote:
+    'Stands every die upright and brings the gap back to the middle, so you can fix several off dice one after another.',
+  hardCaseHalfEdge: 'Left of the gap, upside down',
+  hardCaseHalfCorner: 'Up-left of the gap, upside down',
+  hardCasePairAdjacent: 'Two neighbours, sideways',
+  hardCasePairApart: 'Two apart, sideways',
+  lookTitle: 'Hard mode look (for comparing designs)',
+  lookSide: 'Mark on the 2 face',
+  lookBand: 'Blue face',
+  lookBar: 'Blue line',
+  lookDots: 'Blue 2 pips',
+  lookNone: 'None',
+  lookOne: 'Picture on the 1',
+  lookOneDot: 'Dot (plain)',
+  lookOneKoma: 'Shogi piece',
+  lookOneFuji: 'Red Fuji',
+  lookOneTorii: 'Torii gate',
+  lookOneOne: 'Numeral 1',
+  lookOneTri: 'Triangle',
+  lookOneDial: 'Dial',
 
   settingsTitle: 'Settings',
   language: 'Language',

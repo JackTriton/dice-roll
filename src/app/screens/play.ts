@@ -1,7 +1,7 @@
 // プレイ画面: タイムアタック(ランキング / 練習)とチュートリアル。結果の表示と送信もここで行う。
 
 import { decodeBoard, tapToMoves, type Board } from '../../core/board.ts';
-import type { Size } from '../../core/constants.ts';
+import type { Rule, Size } from '../../core/constants.ts';
 import type { Move } from '../../core/dice.ts';
 import { validateNickname } from '../../core/nickname.ts';
 import { cryptoRng } from '../../core/random.ts';
@@ -13,12 +13,13 @@ import { apiEnabled, prefetchScramble, putProfile, submitSolve, takeScramble } f
 import { formatTime, Session, type SessionInfo } from '../game/session.ts';
 import { t, type MessageKey } from '../i18n/index.ts';
 import { attachGestures, keyToMove, SWIPE_RATIO } from '../input/gestures.ts';
-import { load, recordSolve, save } from '../records.ts';
+import { activeRule, load, lookFor, recordSolve, save } from '../records.ts';
 import { BoardView } from '../render/boardView.ts';
 import { LiveAnimator } from '../render/frame.ts';
 import { shareResult, shareText } from '../share.ts';
 import { toArrows } from '../ui/arrows.ts';
 import { $, activeScreen, onLeave, showScreen, toast } from '../ui/dom.ts';
+import { sizeLabel } from '../ui/labels.ts';
 
 export interface PlayNav {
   title(): void;
@@ -28,6 +29,7 @@ export interface PlayNav {
 
 export interface ResultMeta {
   size: Size;
+  rule: Rule;
   timeMs: number;
   moves: number;
   rank: number | null;
@@ -101,7 +103,7 @@ export function initPlay(n: PlayNav): void {
     nav.title();
   });
   $('btn-again').addEventListener('click', () => {
-    if (session) void startGame(session.info.size);
+    if (session) void startGame(session.info.size, session.info.rule);
   });
   $('btn-to-title').addEventListener('click', () => nav.title());
   $('btn-share').addEventListener('click', async () => {
@@ -140,7 +142,8 @@ function resetUi(info: SessionInfo) {
     info.mode === 'ranked' ? 'modeRanked' : info.mode === 'practice' ? 'modePractice' : 'modeTutorial',
   );
   mode.className = `badge ${info.mode}`;
-  $('play-size').textContent = t(info.size === 3 ? 'sizeShort3' : 'sizeShort4');
+  $('play-size').textContent = sizeLabel(info.size, info.rule);
+  view.look = lookFor(info.rule);
   $('tutorial-bar').hidden = info.mode !== 'tutorial';
   $('btn-tut-next').hidden = true;
   // 隠しても場所は残し、上の段の並び(左・中央・右)を崩さない
@@ -157,13 +160,13 @@ function begin(info: SessionInfo, board: Board) {
 }
 
 /** タイムアタックを始める。オンラインならサーバーの問題(ランキング)、そうでなければ端末の問題(練習) */
-export async function startGame(size: Size): Promise<void> {
+export async function startGame(size: Size, rule: Rule = activeRule()): Promise<void> {
   clearAnswer();
   tutorialIndex = -1;
   stopLoop();
   session = null;
   showScreen('play');
-  resetUi({ size, mode: 'practice', scrambleId: null });
+  resetUi({ size, rule, mode: 'practice', scrambleId: null });
   $('play-hint').textContent = t('preparing');
   $('timer').textContent = '0.00';
   $('play-moves').textContent = t('movesCount', { n: 0 });
@@ -171,24 +174,26 @@ export async function startGame(size: Size): Promise<void> {
   const store = load();
   let info: SessionInfo | null = null;
   let board: Board | null = null;
-  if (apiEnabled && navigator.onLine) {
-    const s = await takeScramble(store.deviceId, size);
+  const online = apiEnabled && navigator.onLine;
+  if (online) {
+    const s = await takeScramble(store.deviceId, size, rule);
     const b = s && decodeBoard(s.scramble);
-    if (s && b && b.size === size) {
-      info = { size, mode: 'ranked', scrambleId: s.scrambleId };
+    // サーバーがそのルールに対応していなければ(ハードを受け付けない設定など)、端末の問題にする
+    if (s && b && b.size === size && (s.rule ?? 'ones') === rule) {
+      info = { size, rule, mode: 'ranked', scrambleId: s.scrambleId };
       board = b;
     }
   }
   if (!info || !board) {
     await loadPool();
-    const sc = makeScramble(size, cryptoRng(), pool3);
-    info = { size, mode: 'practice', scrambleId: null };
+    const sc = makeScramble(size, cryptoRng(), pool3, rule);
+    info = { size, rule, mode: 'practice', scrambleId: null };
     board = sc.board;
   }
   if (activeScreen() !== 'play') return;
   begin(info, board);
   // 次の回の問題を先読みしておく
-  if (apiEnabled && navigator.onLine) void prefetchScramble(store.deviceId, size);
+  if (online) void prefetchScramble(store.deviceId, size, rule);
 }
 
 export function startTutorial(index: number): void {
@@ -197,7 +202,7 @@ export function startTutorial(index: number): void {
   tutorialIndex = index;
   showScreen('play');
   const p = TUTORIAL[index];
-  begin({ size: 3, mode: 'tutorial', scrambleId: null }, tutorialBoard(p));
+  begin({ size: 3, rule: 'ones', mode: 'tutorial', scrambleId: null }, tutorialBoard(p));
   $('play-hint').textContent = `${t('tutorialN', { n: index + 1 })} — ${t(p.hint)}`;
   $('timer').textContent = '';
 }
@@ -239,7 +244,10 @@ function startLoop() {
     if (session.info.mode !== 'tutorial') {
       timer.textContent = formatTime(session.elapsed(now));
       timer.className = `timer ${session.phase === 'ready' ? 'ready' : session.phase === 'done' ? 'done' : ''}`;
-      $('play-hint').textContent = session.phase === 'ready' ? t('readyHint') : '';
+      $('play-hint').textContent =
+        session.phase === 'ready'
+          ? t(session.info.rule === 'aligned' ? 'readyHintAligned' : 'readyHint')
+          : '';
     }
     view.draw(animator.frame(now));
   };
@@ -270,7 +278,10 @@ function onSolved(): void {
   const log = s.log();
   const timeMs = solveTime(log);
   const outcome = recordSolve(s.info.size, log, timeMs);
-  lastResult = { log, meta: { size: s.info.size, timeMs, moves: log.moves.length, rank: null } };
+  lastResult = {
+    log,
+    meta: { size: s.info.size, rule: s.info.rule, timeMs, moves: log.moves.length, rank: null },
+  };
 
   // 最後の転がりが見えてから結果を出す
   setTimeout(() => {
@@ -322,7 +333,13 @@ async function submit(s: Session, log: SolveLog, timeMs: number): Promise<void> 
   rank.hidden = false;
   rank.textContent = t('submitting');
   // 送る前に、サーバーと同じ検証をかけておく
-  const local = verifySolve({ scramble: log.scramble, moves: log.moves, times: log.times, timeMs });
+  const local = verifySolve({
+    scramble: log.scramble,
+    moves: log.moves,
+    times: log.times,
+    timeMs,
+    rule: s.info.rule,
+  });
   if (!local.ok) {
     rank.textContent = t('rejected', { reason: t(`rejectReason_${local.reason}` as MessageKey) });
     return;
@@ -369,12 +386,16 @@ async function submit(s: Session, log: SolveLog, timeMs: number): Promise<void> 
 }
 
 /** E2E テスト用: 指定の盤面で始める */
-export function startWithBoard(board: Board, mode: SessionInfo['mode'] = 'practice'): void {
+export function startWithBoard(
+  board: Board,
+  mode: SessionInfo['mode'] = 'practice',
+  rule: Rule = 'ones',
+): void {
   clearAnswer();
   stopLoop();
   tutorialIndex = -1;
   showScreen('play');
-  begin({ size: board.size, mode, scrambleId: null }, board);
+  begin({ size: board.size, rule, mode, scrambleId: null }, board);
 }
 
 export const currentSession = (): Session | null => session;

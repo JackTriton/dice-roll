@@ -1,17 +1,24 @@
 // 結果の共有。Web Share API が使えればスマホの共有シート、使えなければクリップボードへ。
 
-import type { Size } from '../core/constants.ts';
+import type { Rule, Size } from '../core/constants.ts';
 import { t } from './i18n/index.ts';
 import { formatTime } from './game/session.ts';
+import { sizeLabel } from './ui/labels.ts';
 
 export function siteUrl(): string {
   return location.origin + location.pathname.replace(/index\.html$/, '');
 }
 
-export function shareText(p: { size: Size; timeMs: number; moves: number; rank: number | null }): string {
+export function shareText(p: {
+  size: Size;
+  rule?: Rule;
+  timeMs: number;
+  moves: number;
+  rank: number | null;
+}): string {
   const body = t('shareText', {
     app: t('appName'),
-    size: t(p.size === 3 ? 'sizeShort3' : 'sizeShort4'),
+    size: sizeLabel(p.size, p.rule),
     time: formatTime(p.timeMs),
     moves: p.moves,
     rank: p.rank ? t('shareRank', { rank: p.rank }) : '',

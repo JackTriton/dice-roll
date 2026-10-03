@@ -1,7 +1,7 @@
 // 記録の検証。サーバー(Worker)が登録前に使い、ブラウザも送信前に同じ検証をかける。
 
-import { applyMove, decodeBoard, isSolved } from './board.ts';
-import { MAX_MOVES, MIN_AVG_GESTURE_MS } from './constants.ts';
+import { applyMove, decodeBoard, isGoal } from './board.ts';
+import { MAX_MOVES, MIN_AVG_GESTURE_MS, type Rule } from './constants.ts';
 import type { Move } from './dice.ts';
 
 export type RejectReason =
@@ -21,6 +21,8 @@ export interface SolveSubmission {
   moves: string;
   times: number[];
   timeMs: number;
+  /** クリアの条件(無ければ ones) */
+  rule?: Rule;
 }
 
 const MOVE_RE = /^[UDLR]+$/;
@@ -38,7 +40,8 @@ export function verifySolve(s: SolveSubmission, minAvgGestureMs = MIN_AVG_GESTUR
     !Number.isSafeInteger(s.timeMs)
   )
     return { ok: false, reason: 'bad_format' };
-  if (isSolved(b)) return { ok: false, reason: 'already_solved' };
+  const rule = s.rule ?? 'ones';
+  if (isGoal(b, rule)) return { ok: false, reason: 'already_solved' };
 
   for (let i = 1; i < s.times.length; i++)
     if (s.times[i] < s.times[i - 1]) return { ok: false, reason: 'times_decreasing' };
@@ -46,7 +49,7 @@ export function verifySolve(s: SolveSubmission, minAvgGestureMs = MIN_AVG_GESTUR
 
   for (let i = 0; i < s.moves.length; i++) {
     if (!applyMove(b, s.moves[i] as Move)) return { ok: false, reason: 'illegal_move' };
-    const solved = isSolved(b);
+    const solved = isGoal(b, rule);
     if (solved && i < s.moves.length - 1) return { ok: false, reason: 'solved_early' };
     if (!solved && i === s.moves.length - 1) return { ok: false, reason: 'not_solved' };
   }

@@ -2,8 +2,17 @@
 //
 // マスの番号は 行 * size + 列。0 行目が画面の上(北)。
 
-import type { Size } from './constants.ts';
-import { MIN_ROLLS_TO_TOP, MOVE_VEC, ONE_DIR, ROLL, topPip, type Move } from './dice.ts';
+import type { Rule, Size } from './constants.ts';
+import {
+  MIN_ROLLS_TO_TOP,
+  MOVE_VEC,
+  ONE_DIR,
+  ORIENT_PARITY,
+  ROLL,
+  UPRIGHT,
+  topPip,
+  type Move,
+} from './dice.ts';
 
 export const BLANK = 255;
 
@@ -53,6 +62,25 @@ export function isSolved(b: Board): boolean {
   for (let i = 0; i < b.cells.length; i++) if (i !== b.blank && topPip(b.cells[i]) !== 1) return false;
   return true;
 }
+
+/** 全部のサイコロが正立しているか(1が上で、2の面が奥。ハードのクリア条件) */
+export function isAligned(b: Board): boolean {
+  for (let i = 0; i < b.cells.length; i++) if (i !== b.blank && b.cells[i] !== UPRIGHT) return false;
+  return true;
+}
+
+export const isGoal = (b: Board, rule: Rule): boolean => (rule === 'aligned' ? isAligned(b) : isSolved(b));
+
+/** マスの色(市松模様の 0 / 1)。左上・角・3×3 の真ん中が 0 */
+export const cellColor = (size: number, cell: number): number =>
+  (Math.floor(cell / size) + (cell % size)) & 1;
+
+/**
+ * サイコロの組(0 / 1)。「向きの偶奇 ⊕ マスの色」は、1つ転がるたびに両方が入れ替わるので、
+ * どう動かしても変わらない。同じ向きに揃えられるのは、マスの色ごとに組が分かれるときだけ(研究メモ参照)。
+ */
+export const dieKind = (size: number, cell: number, orient: number): number =>
+  ORIENT_PARITY[orient] ^ cellColor(size, cell);
 
 /** 1の目を上にするのに最低限要る転がり回数の合計(最短手数の下界) */
 export function lowerBound(b: Board): number {

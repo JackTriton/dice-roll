@@ -8,4 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_SITE_URL?: string;
   /** E2E テスト用のフックを有効にする */
   readonly VITE_E2E?: string;
+  /** ハード(正立に揃える)を出す('1' で有効) */
+  readonly VITE_HARD_MODE?: string;
+  /** ハードの見た目を「設定」で切り替えられるようにする(見比べ用。開発用の版だけで '1' にしている) */
+  readonly VITE_LOOK_LAB?: string;
 }

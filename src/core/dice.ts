@@ -135,6 +135,12 @@ export const PIPS: Uint8Array = (() => {
 
 export const topPip = (o: number): number => PIPS[o * 6 + TOP];
 
+/** 正立の向き: 1が上で、2の面が奥(北)。ハードでは、全部のサイコロをこの向きに揃える */
+export const UPRIGHT: number = (() => {
+  for (let o = 0; o < 24; o++) if (PIPS[o * 6 + TOP] === 1 && PIPS[o * 6 + NORTH] === 2) return o;
+  throw new Error('unreachable');
+})();
+
 /** ONE_DIR[o] = 向き o のとき、1の目が向いている世界の方向(TOP..WEST) */
 export const ONE_DIR: Uint8Array = Uint8Array.from({ length: 24 }, (_, o) => {
   for (let d = 0; d < 6; d++) if (PIPS[o * 6 + d] === 1) return d;

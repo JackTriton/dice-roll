@@ -33,11 +33,22 @@
         <div class="title-hero">
           <canvas id="title-dice" class="title-dice" aria-hidden="true"></canvas>
           <h1 data-i18n="appName">サイコロ8パズル</h1>
-          <p class="tagline" data-i18n="tagline">転がして、全部1に。</p>
+          <p class="tagline" id="tagline" data-i18n="tagline">転がして、全部1に。</p>
         </div>
         <div class="size-select" role="radiogroup">
           <button type="button" role="radio" data-size="3" data-i18n="size3">3×3(8個)</button>
           <button type="button" role="radio" data-size="4" data-i18n="size4">4×4(15個)</button>
+        </div>
+        <!-- ルールの選択(ハードを出していない版では隠す) -->
+        <div class="rule-select" role="radiogroup" id="rule-select" hidden>
+          <button type="button" role="radio" data-rule="ones">
+            <strong data-i18n="ruleOnes">ふつう</strong>
+            <span data-i18n="ruleOnesNote">全部1に</span>
+          </button>
+          <button type="button" role="radio" data-rule="aligned">
+            <strong data-i18n="ruleAligned">ハード</strong>
+            <span data-i18n="ruleAlignedNote">正立にそろえる</span>
+          </button>
         </div>
         <button type="button" id="btn-start" class="btn primary big" data-i18n="start">スタート</button>
         <dl class="stats" id="title-stats">
@@ -148,6 +159,11 @@
           <button type="button" role="tab" data-size="3" data-i18n="sizeShort3">3×3</button>
           <button type="button" role="tab" data-size="4" data-i18n="sizeShort4">4×4</button>
         </div>
+        <!-- ルールの切り替え(ハードを出していない版では隠す) -->
+        <div class="size-select" role="tablist" id="ranking-rules" hidden>
+          <button type="button" role="tab" data-rule="ones" data-i18n="ruleOnes">ふつう</button>
+          <button type="button" role="tab" data-rule="aligned" data-i18n="ruleAligned">ハード</button>
+        </div>
         <p class="note" id="ranking-me"></p>
         <ol class="ranking-list" id="ranking-list"></ol>
         <p class="note" id="ranking-status" hidden></p>
@@ -186,6 +202,33 @@
           <p class="note" id="tips-mode-note"></p>
           <div class="tips-grid" id="tips-grid"></div>
         </section>
+        <!-- ハード(正立に揃える)の説明(ハードを出していない版では隠す) -->
+        <section class="tips" id="hard-howto" aria-labelledby="hard-title" hidden>
+          <h3 id="hard-title" data-i18n="hardTitle">ハード: 正立にそろえる</h3>
+          <ol class="rules" id="hard-rules"></ol>
+          <div class="hard-examples">
+            <figure>
+              <canvas id="hard-ex-near"></canvas>
+              <figcaption data-i18n="hardNotYet">まだ(左の2個が横倒し)</figcaption>
+            </figure>
+            <figure>
+              <canvas id="hard-ex-done"></canvas>
+              <figcaption data-i18n="hardDone">クリア</figcaption>
+            </figure>
+          </div>
+          <h4 data-i18n="hardTipsTitle">1は全部上で、向きだけがずれているとき</h4>
+          <p class="note" data-i18n="hardTipsNote"></p>
+          <div class="size-select" role="tablist" id="hard-tips-mode">
+            <button type="button" role="tab" data-mode="solve" data-i18n="tipsModeSolve">
+              そのまま揃える
+            </button>
+            <button type="button" role="tab" data-mode="return" data-i18n="tipsModeReturn">
+              空きを真ん中に戻す
+            </button>
+          </div>
+          <p class="note" id="hard-tips-mode-note"></p>
+          <div class="tips-grid" id="hard-tips-grid"></div>
+        </section>
       </section>
 
       <!-- 設定 -->
@@ -215,6 +258,32 @@
           </div>
           <span class="note" id="settings-nick-status"></span>
         </form>
+        <!-- ハードのサイコロの見た目(案の見比べ用。開発用の版でだけ出す) -->
+        <section class="field look-settings" id="look-settings" hidden>
+          <span data-i18n="lookTitle">ハードの見た目(見比べ用)</span>
+          <label class="row">
+            <span data-i18n="lookSide">2の面の目印</span>
+            <select id="look-side">
+              <option value="bar" data-i18n="lookBar">青い線</option>
+              <option value="band" data-i18n="lookBand">青い面</option>
+              <option value="dots" data-i18n="lookDots">青い2の目</option>
+              <option value="none" data-i18n="lookNone">なし</option>
+            </select>
+          </label>
+          <label class="row">
+            <span data-i18n="lookOne">1の図案</span>
+            <select id="look-one">
+              <option value="tri" data-i18n="lookOneTri">三角</option>
+              <option value="koma" data-i18n="lookOneKoma">駒</option>
+              <option value="fuji" data-i18n="lookOneFuji">赤富士</option>
+              <option value="torii" data-i18n="lookOneTorii">鳥居</option>
+              <option value="one" data-i18n="lookOneOne">数字の1</option>
+              <option value="dial" data-i18n="lookOneDial">つまみ</option>
+              <option value="dot" data-i18n="lookOneDot">丸(ふつう)</option>
+            </select>
+          </label>
+          <canvas id="look-preview" class="look-preview" aria-hidden="true"></canvas>
+        </section>
         <p class="note"><span data-i18n="deviceId">端末ID</span>: <code id="device-id"></code></p>
         <button type="button" class="btn ghost" id="btn-reset" data-i18n="resetRecords">
           端末内の記録を消す
@@ -244,6 +313,11 @@
           <div class="size-select" role="tablist" id="admin-sizes">
             <button type="button" role="tab" data-size="3">3×3</button>
             <button type="button" role="tab" data-size="4">4×4</button>
+          </div>
+          <!-- ルールの切り替え(ハードを出していない版では隠す) -->
+          <div class="size-select" role="tablist" id="admin-rules" hidden>
+            <button type="button" role="tab" data-rule="ones">ふつう</button>
+            <button type="button" role="tab" data-rule="aligned">ハード</button>
           </div>
           <p class="note" id="admin-filter"></p>
           <ol class="admin-list" id="admin-list"></ol>

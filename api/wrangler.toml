@@ -8,6 +8,8 @@ compatibility_date = "2026-09-01"
 # 手元の開発(wrangler dev)では api/.dev.vars の値で上書きされる
 [vars]
 ALLOWED_ORIGINS = "https://ikaosu.github.io"
+# ハード(正立に揃える)のランキングを受け付ける。外すと、ふつうのルールだけになる
+HARD_MODE = "1"
 
 [[d1_databases]]
 binding = "DB"

@@ -1,7 +1,8 @@
 // API テストの共通の準備: 決め打ちの問題を出す API と、テスト用の DB・時計
 
 import { createApp } from '../../api/src/app.ts';
-import { applyMove, cloneBoard, isSolved, solvedBoard } from '../../src/core/board.ts';
+import { alignedExample } from '../../src/core/aligned.ts';
+import { applyMove, cloneBoard, isAligned, isSolved, solvedBoard, type Board } from '../../src/core/board.ts';
 import { MOVES, OPPOSITE, type Move } from '../../src/core/dice.ts';
 import { encodePoolEntry } from '../../src/core/pool.ts';
 import { randInt, seededRng } from '../../src/core/random.ts';
@@ -37,9 +38,38 @@ export function makePuzzle(seed: number) {
   }
 }
 
-/** プールを1問だけにして、発行される問題を決め打ちにする */
-export function setup(seed = 1, opts: { adminToken?: string } = {}) {
+/** ハード用: 正立に揃った盤から崩した問題と、その解答(逆順)。途中で揃うことのない崩し方だけを使う */
+export function makeAlignedPuzzle(seed: number) {
+  const rng = seededRng(seed);
+  for (;;) {
+    const b = alignedExample(3, 'done');
+    const walk: Move[] = [];
+    let ok = true;
+    while (walk.length < 30) {
+      const m = MOVES[randInt(rng, 4)];
+      if (walk.length && m === OPPOSITE[walk[walk.length - 1]]) continue;
+      if (!applyMove(b, m)) continue;
+      walk.push(m);
+      if (isAligned(b)) ok = false;
+    }
+    if (ok)
+      return {
+        board: cloneBoard(b),
+        solution: walk
+          .reverse()
+          .map((m) => OPPOSITE[m])
+          .join(''),
+      };
+  }
+}
+
+/** プールを1問だけにして、発行される問題を決め打ちにする(ハードの問題も、解答の分かっているものに差し替える) */
+export function setup(
+  seed = 1,
+  opts: { adminToken?: string; hardMode?: boolean; alignedBoard?: Board | null } = {},
+) {
   const puzzle = makePuzzle(seed);
+  const alignedPuzzle = makeAlignedPuzzle(seed);
   const pool = new Uint8Array(7);
   encodePoolEntry(puzzle.board, 26, pool, 0);
   let clock = 1_000_000;
@@ -51,6 +81,10 @@ export function setup(seed = 1, opts: { adminToken?: string } = {}) {
     rng: seededRng(seed),
     allowedOrigins: [ORIGIN],
     adminToken: opts.adminToken,
+    hardMode: opts.hardMode,
+    // alignedBoard: null なら、本番と同じ乱数の問題を出す
+    alignedScramble:
+      opts.alignedBoard === null ? undefined : () => cloneBoard(opts.alignedBoard ?? alignedPuzzle.board),
   });
   const call = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => {
     const res = await app.fetch(
@@ -64,6 +98,7 @@ export function setup(seed = 1, opts: { adminToken?: string } = {}) {
   };
   return {
     puzzle,
+    alignedPuzzle,
     db,
     app,
     call,

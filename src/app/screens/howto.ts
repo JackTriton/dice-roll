@@ -1,10 +1,19 @@
 // 遊び方: ルールの説明、転がると目が変わる様子の動くデモ、「1個だけ揃っていないとき」の定石。
+// ハード(正立に揃える)の説明と定石も出す。
 
-import { encodeBoard } from '../../core/board.ts';
+import { alignedExample } from '../../core/aligned.ts';
+import {
+  ALIGNED_FORMULAS,
+  alignedFormulaBoard,
+  type AlignedFormulaKind,
+} from '../../core/alignedFormulas.ts';
+import { encodeBoard, type Board } from '../../core/board.ts';
 import { BOTTOM, EAST, NORTH, ONE_DIR, SOUTH, WEST } from '../../core/dice.ts';
-import { ONE_OFF_FORMULAS, formulaBoard, type OneOffFormula } from '../../core/tutorial.ts';
+import { ONE_OFF_FORMULAS, formulaBoard } from '../../core/tutorial.ts';
+import { HARD_MODE } from '../flags.ts';
 import { t, type MessageKey } from '../i18n/index.ts';
-import { BOARD_PALETTE, drawBoard } from '../render/boardView.ts';
+import { hardLook, lookFor } from '../records.ts';
+import { BOARD_PALETTE, PLAIN_LOOK, drawBoard, type BoardLook } from '../render/boardView.ts';
 import { drawDie } from '../render/dieRenderer.ts';
 import { ReplayTimeline } from '../render/frame.ts';
 import { toArrows } from '../ui/arrows.ts';
@@ -12,10 +21,10 @@ import { $, onLeave, showScreen } from '../ui/dom.ts';
 
 let raf = 0;
 const tipRafs = new Map<HTMLCanvasElement, number>();
-/** 定石の種類: solve = そのまま揃える、return = 最後に空きマスを真ん中へ戻す */
+/** 定石の種類: solve = そのまま揃える、return = ほかを元に戻す(ふつうのルールでは、空きマスを真ん中へ戻す) */
 type TipMode = 'solve' | 'return';
 let tipMode: TipMode = 'solve';
-const tipMoves = (f: OneOffFormula): string => (tipMode === 'return' ? f.movesReturn : f.moves);
+let hardTipMode: TipMode = 'solve';
 
 /** 定石の再生は、見て追えるようにゆっくりにする */
 const TIP_STEP_MS = 420;
@@ -29,20 +38,46 @@ const DIR_KEY: Record<number, MessageKey> = {
   [BOTTOM]: 'dirBottom',
 };
 
+const HARD_CASE_KEY: Record<AlignedFormulaKind, MessageKey> = {
+  halfEdge: 'hardCaseHalfEdge',
+  halfCorner: 'hardCaseHalfCorner',
+  pairAdjacent: 'hardCasePairAdjacent',
+  pairApart: 'hardCasePairApart',
+};
+
+/** 定石のカード1枚: 出発点の盤、説明、手順、盤の見た目 */
+interface TipCard {
+  board: Board;
+  label: string;
+  moves: string;
+  look: BoardLook;
+}
+
+function stopTips(): void {
+  for (const id of tipRafs.values()) cancelAnimationFrame(id);
+  tipRafs.clear();
+}
+
 export function initHowto(nav: { back(): void; tutorial(): void }): void {
   $('btn-howto-back').addEventListener('click', nav.back);
   $('btn-tutorial').addEventListener('click', nav.tutorial);
   for (const b of document.querySelectorAll<HTMLButtonElement>('#tips-mode button'))
     b.addEventListener('click', () => {
       tipMode = b.dataset.mode as TipMode;
-      for (const id of tipRafs.values()) cancelAnimationFrame(id);
-      tipRafs.clear();
+      stopTips();
       renderTips();
+      renderHardTips();
+    });
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#hard-tips-mode button'))
+    b.addEventListener('click', () => {
+      hardTipMode = b.dataset.mode as TipMode;
+      stopTips();
+      renderTips();
+      renderHardTips();
     });
   onLeave('howto', () => {
     cancelAnimationFrame(raf);
-    for (const id of tipRafs.values()) cancelAnimationFrame(id);
-    tipRafs.clear();
+    stopTips();
   });
 }
 
@@ -50,44 +85,122 @@ export function showHowto(): void {
   showScreen('howto');
   animateDemo();
   renderTips();
+  renderHard();
 }
 
-/** 定石のカードを並べる。盤面をタップすると、その手順を盤の上で再生する */
+/** ハード(正立に揃える)の説明(ハードを出していない版では隠す) */
+function renderHard(): void {
+  const section = $('hard-howto');
+  section.hidden = !HARD_MODE;
+  if (!HARD_MODE) return;
+  const look = hardLook();
+  // 向きの見分け方は、見た目(1の図案、2の面の目印)に合わせて説明する
+  const keys: MessageKey[] = ['hardRule1'];
+  if (look.one === 'tri') {
+    keys.push('hardRuleTri', 'hardRuleTriRim');
+    keys.push(look.side === 'none' ? 'hardRuleTriBottom' : 'hardRuleTriSide');
+  } else if (look.one !== 'dot') {
+    keys.push('hardRuleFigure', 'hardRuleFigureRim');
+    keys.push(look.side === 'none' ? 'hardRuleFigureBottom' : 'hardRuleSideAlso');
+  } else keys.push('hardRuleSide');
+  keys.push('hardRuleParity');
+  const list = $('hard-rules');
+  list.replaceChildren(
+    ...keys.map((k) => {
+      const li = document.createElement('li');
+      li.textContent = t(k);
+      return li;
+    }),
+  );
+  for (const kind of ['near', 'done'] as const) {
+    const canvas = $<HTMLCanvasElement>(`hard-ex-${kind}`);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) continue;
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    const css = canvas.getBoundingClientRect().width || 150;
+    canvas.width = canvas.height = Math.floor(css * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, css, css);
+    drawBoard(
+      ctx,
+      0,
+      0,
+      css,
+      { board: alignedExample(3, kind), moving: [], t: 0 },
+      BOARD_PALETTE,
+      lookFor('aligned'),
+    );
+  }
+  renderHardTips();
+}
+
+/** ふつうのルールの定石(1個だけ揃っていないとき) */
 function renderTips(): void {
   for (const b of document.querySelectorAll<HTMLButtonElement>('#tips-mode button'))
     b.setAttribute('aria-selected', String(b.dataset.mode === tipMode));
   $('tips-mode-note').textContent = t(tipMode === 'return' ? 'tipsModeReturnNote' : 'tipsModeSolveNote');
-  const grid = $('tips-grid');
+  renderCards(
+    $('tips-grid'),
+    ONE_OFF_FORMULAS.map((f) => ({
+      board: formulaBoard(f),
+      label: t('tipsCase', {
+        pos: t(f.cell === 3 ? 'tipsPosLeft' : 'tipsPosDiag'),
+        dir: t(DIR_KEY[f.dir]),
+      }),
+      moves: tipMode === 'return' ? f.movesReturn : f.moves,
+      look: PLAIN_LOOK,
+    })),
+  );
+}
+
+/** ハードの定石(1は全部上で、向きだけがずれているとき) */
+function renderHardTips(): void {
+  if (!HARD_MODE) return;
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#hard-tips-mode button'))
+    b.setAttribute('aria-selected', String(b.dataset.mode === hardTipMode));
+  $('hard-tips-mode-note').textContent = t(
+    hardTipMode === 'return' ? 'hardTipsModeReturnNote' : 'hardTipsModeSolveNote',
+  );
+  const look = lookFor('aligned');
+  renderCards(
+    $('hard-tips-grid'),
+    ALIGNED_FORMULAS.map((f) => ({
+      board: alignedFormulaBoard(f),
+      label: t(HARD_CASE_KEY[f.kind]),
+      moves: hardTipMode === 'return' ? f.movesReturn : f.moves,
+      look,
+    })),
+  );
+}
+
+/** 定石のカードを並べる。盤面をタップすると、その手順を盤の上で再生する */
+function renderCards(grid: HTMLElement, cards: TipCard[]): void {
   grid.replaceChildren();
-  for (const f of ONE_OFF_FORMULAS) {
+  for (const c of cards) {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'tip';
     const canvas = document.createElement('canvas');
     const label = document.createElement('span');
     label.className = 'tip-label';
-    label.textContent = t('tipsCase', {
-      pos: t(f.cell === 3 ? 'tipsPosLeft' : 'tipsPosDiag'),
-      dir: t(DIR_KEY[f.dir]),
-    });
+    label.textContent = c.label;
     const moves = document.createElement('span');
     moves.className = 'tip-moves';
-    moves.textContent = `${t('movesCount', { n: tipMoves(f).length })}  ${toArrows(tipMoves(f))}`;
+    moves.textContent = `${t('movesCount', { n: c.moves.length })}  ${toArrows(c.moves)}`;
     card.append(canvas, label, moves);
-    card.addEventListener('click', () => playTip(canvas, f));
+    card.addEventListener('click', () => playTip(canvas, c));
     grid.append(card);
     // 再生前は、最初の手が動き出す前(時刻 -1)の止まった盤面を描く
-    drawTip(canvas, f, -1);
+    drawTip(canvas, c, -1);
   }
 }
 
-function tipTimeline(f: OneOffFormula): ReplayTimeline {
-  const moves = tipMoves(f);
-  const times = [...moves].map((_, i) => i * TIP_STEP_MS);
-  return new ReplayTimeline({ scramble: encodeBoard(formulaBoard(f)), moves, times }, TIP_TIMING);
+function tipTimeline(c: TipCard): ReplayTimeline {
+  const times = [...c.moves].map((_, i) => i * TIP_STEP_MS);
+  return new ReplayTimeline({ scramble: encodeBoard(c.board), moves: c.moves, times }, TIP_TIMING);
 }
 
-function drawTip(canvas: HTMLCanvasElement, f: OneOffFormula, ms: number, timeline = tipTimeline(f)): void {
+function drawTip(canvas: HTMLCanvasElement, c: TipCard, ms: number, timeline = tipTimeline(c)): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const dpr = Math.min(3, window.devicePixelRatio || 1);
@@ -96,18 +209,18 @@ function drawTip(canvas: HTMLCanvasElement, f: OneOffFormula, ms: number, timeli
   if (canvas.width !== px) canvas.width = canvas.height = px;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, css, css);
-  drawBoard(ctx, 0, 0, css, timeline.frameAt(ms), BOARD_PALETTE);
+  drawBoard(ctx, 0, 0, css, timeline.frameAt(ms), BOARD_PALETTE, c.look);
 }
 
-function playTip(canvas: HTMLCanvasElement, f: OneOffFormula): void {
+function playTip(canvas: HTMLCanvasElement, c: TipCard): void {
   cancelAnimationFrame(tipRafs.get(canvas) ?? 0);
-  const timeline = tipTimeline(f);
+  const timeline = tipTimeline(c);
   // 最初の盤面を少し見せてから動かす
   const lead = 500;
   const t0 = performance.now();
   const step = (now: number) => {
     const ms = now - t0 - lead;
-    drawTip(canvas, f, ms, timeline);
+    drawTip(canvas, c, ms, timeline);
     if (ms < timeline.lastEnd) tipRafs.set(canvas, requestAnimationFrame(step));
     else tipRafs.delete(canvas);
   };

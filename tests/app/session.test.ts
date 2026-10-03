@@ -5,7 +5,7 @@ import { Session } from '../../src/app/game/session.ts';
 
 // 空きは中央、左のサイコロだけ1が左(→ で揃う)、ほかに下のサイコロを少し崩して1手では揃わないようにする
 const board = () => createBoard(3, 4, [0, 0, 0, ROLL.L[0], 0, 0, 0, ROLL.R[0], 0]);
-const info = { size: 3 as const, mode: 'practice' as const, scrambleId: null };
+const info = { size: 3 as const, rule: 'ones' as const, mode: 'practice' as const, scrambleId: null };
 
 describe('Session timing', () => {
   it('starts timing at the first move, not when the board appears', () => {

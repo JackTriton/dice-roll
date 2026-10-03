@@ -5,6 +5,7 @@
 - 盤に同じサイコロと空きマスが1つ。スワイプすると、空きマスの隣のサイコロがその方向へ**転がり**、上の目が変わります
 - 全部のサイコロの上を「1」にしたらクリア。3×3(8個)と 4×4(15個)
 - どんな並べ方からでも必ず全部1にできます(3×3 は全 15,116,544 状態を総当たりで確認、4×4 は群の計算で証明)
+- **ハード**: 1を上にするだけでなく、全部を「正立」(1の三角が奥を指す向き)に揃えます。ランキングは、ふつうとは別です
 - タイム順のオンラインランキング、結果の共有、実際の速さで再現したリプレイ動画(MP4)の保存、日本語 / 英語
 - スマホのブラウザで、インストールなしで遊べます(ホーム画面に追加すればオフラインでも練習できます)
 
@@ -48,14 +49,27 @@ npm run build        # 本番ビルド(dist/)と、初回の転送量のチェ�
 npm run test:e2e     # E2E テスト(Windows の Edge を使う。PW_CHANNEL=chrome で Chrome に変えられる)
 ```
 
-ランキングまで手元で試すとき:
+ランキングまで手元で試すとき(開発サーバーは、`.env.development` の設定で、手元の API `http://localhost:8787` につなぎます。API を起動していなければ、練習として遊べます):
 
 ```bash
-npm run db:migrate:local                       # ローカルの D1 にテーブルを作る(初回だけ)
-npm run dev:api                                # Worker を http://localhost:8787 で起動
-VITE_API_BASE=http://localhost:8787 npm run dev
+npm run db:migrate:local                       # ローカルの D1 にテーブルを作る(初回と、マイグレーションを足したとき)
+npm run dev:api                                # Worker を http://localhost:8787 で起動(別のターミナルで)
+npm run dev
 E2E_API=http://localhost:8787 npx playwright test ranked   # ランキングの通しテスト
 ```
+
+### ハード(正立に揃える)
+
+全部のサイコロを「1が上で、正立(1の三角が奥を指す向き = 2の面が奥)」に揃えるルールです。全部が同じ向きでも、横向きや下向きではクリアになりません。
+
+- タイトル画面で「ふつう / ハード」を選びます。タイトルのサイコロの絵と合言葉は、ハードを選んでいる間だけ変わります
+- 向きの見せ方: 1の目は赤い三角、2の面のある縁に青い線(三角は、いつも青い線の側を指します)。1が縁にあるときも、縁に赤い三角が出ます
+- 問題は、正立に揃えられる盤面だけから一様に選びます(好きに並べた盤面は、約 27% しか揃えられません)。`npm run check:solvable-hard` で、出題と同じ作り方の問題が実際に解けることを確かめられます
+- ランキングは、ふつうとは別です(盤の大きさ × ルールごと)。API は、`HARD_MODE = "1"`(`api/wrangler.toml` の `[vars]`。手元は `api/.dev.vars`)のときだけハードを受け付けます
+- 出し分け: `.env` の `VITE_HARD_MODE=1` で出しています。外して公開し直すと、ふつうのルールだけになります
+- 見た目の案を見比べるための設定(1の図案、2の面の目印)は、開発サーバーでだけ出ます(`.env.development` の `VITE_LOOK_LAB=1`)。案を並べたページは http://localhost:5173/lab.html (`?size=4` で 4×4)
+- スマホで試すときは `npm run dev -- --host` で起動し、表示された Network の URL を同じ Wi-Fi のスマホで開きます
+- E2E は、見比べ用の設定を出したビルドで走ります。`E2E_LAB=0 npx playwright test` で、本番と同じビルドを確かめられます(`E2E_HARD=0` を付けると、ハードを出さないビルド)
 
 ### 表・問題プール・チェック
 
@@ -63,7 +77,9 @@ E2E_API=http://localhost:8787 npx playwright test ranked   # ランキングの�
 npm run build:table      # 3×3 の最短手数の表(tools/.cache/dist3.bin、約15MB、コミットしない)
 npm run build:pools      # 問題プール: public/pool3.bin(5,000問)と api/data/pool3-server.bin(20万問、コミットしない)
 npm run check:solvable   # ランダムな盤面 3×3・4×4 各1万問が、すべて全部1まで解けることを確かめる
+npm run check:solvable-hard   # ハードの問題 3×3・4×4 各1万問が、すべて正立まで解けることを確かめる(約1分。初回は窓の表 48MB×3 を作る)
 npm run check:tutorial   # 練習問題の解答と「1個だけ揃っていないとき」の定石が最短であることを確かめる
+npm run check:hard-formulas   # ハードの定石(src/core/alignedFormulas.ts)が最短であることを確かめる(約30秒、メモリ約2GB)
 npm run make:assets      # アイコンと OGP 画像を作り直す
 ```
 

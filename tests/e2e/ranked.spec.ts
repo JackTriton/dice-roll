@@ -101,6 +101,58 @@ test('the admin screen replays any attempt and can take a record off the ranking
   await expect(page.locator('#admin-list li', { hasText: nick })).toHaveCount(0);
 });
 
+test('a hard solve is verified by the server and ranked apart from the normal ranking', async ({ page }) => {
+  test.skip(process.env.E2E_HARD === '0', 'ハードを出したビルドで確かめる');
+  test.setTimeout(120_000);
+  await openApp(page);
+  await page.waitForTimeout(2500);
+  await page.click('#rule-select [data-rule="aligned"]');
+  await page.waitForTimeout(2500); // 先読みと発行間隔(2秒)が重ならないように
+  await page.click('#btn-start');
+  await expect(page.locator('#play-mode')).toHaveText('ランキング');
+  await expect(page.locator('#play-size')).toHaveText('3×3 ハード');
+  const s = await session(page);
+  // ハード用のソルバー(最短ではない。80手前後)で解く
+  for (const m of solutionFor(s!.scramble, 'aligned')) {
+    await page.keyboard.press(KEY[m]);
+    await page.waitForTimeout(80);
+  }
+  await expect(page.locator('#nick-form')).toBeVisible();
+  const nick = `ハード${Math.floor(Math.random() * 1000)}`;
+  await page.fill('#nick-input', nick);
+  await page.click('#nick-form button[type="submit"]');
+  await expect(page.locator('#result-rank')).toContainText(/ランキング \d+位/);
+
+  // ランキング画面は、選んでいるルール(ハード)から開く。ふつうのランキングには載らない
+  await page.click('#btn-to-title');
+  await page.click('#btn-ranking');
+  await expect(page.locator('#ranking-rules [data-rule="aligned"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#ranking-list li.me')).toContainText(nick);
+  await page.click('#ranking-rules [data-rule="ones"]');
+  await expect(page.locator('#ranking-me')).toHaveText('まだランキングに記録がありません');
+  await expect(page.locator('#ranking-list li', { hasText: nick })).toHaveCount(0);
+
+  // 管理者画面でも、ハードに切り替えると見えて、リプレイできる
+  await page.goto('/#admin');
+  await page.fill('#admin-token', 'dev-admin-token');
+  await page.click('#admin-login button[type="submit"]');
+  await expect(page.locator('#admin-list')).toBeVisible();
+  await expect(page.locator('#admin-list li', { hasText: nick })).toHaveCount(0);
+  await page.click('#admin-rules [data-rule="aligned"]');
+  const mine = page.locator('#admin-list li', { hasText: nick });
+  await expect(mine).toBeVisible();
+  await mine.getByRole('button', { name: 'ベストを再生' }).click();
+  await expect(page.locator('#screen-replay')).toBeVisible();
+  await expect(page.locator('#replay-info')).toContainText('3×3 ハード');
+  await page.click('#btn-replay-back');
+  await page.click('#admin-tabs [data-tab="attempts"]');
+  await expect(page.locator('#admin-list li', { hasText: nick }).first()).toContainText('受付');
+  await page.click('#admin-tabs [data-tab="ranking"]');
+  page.once('dialog', (d) => void d.accept());
+  await page.locator('#admin-list li', { hasText: nick }).getByRole('button', { name: '記録を消す' }).click();
+  await expect(page.locator('#admin-list li', { hasText: nick })).toHaveCount(0);
+});
+
 test('a tampered submission is rejected by the server', async ({ page, request }) => {
   await openApp(page);
   const deviceId = await page.evaluate(

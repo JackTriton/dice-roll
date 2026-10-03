@@ -1,8 +1,8 @@
 // 1回のタイムアタックの進行: 開始前 → 計測 → 完了(またはリタイア)。計測は最初の1手で始まる。
 // 時刻はすべて performance.now() と同じ基準のミリ秒。
 
-import { applyMove, cloneBoard, encodeBoard, isSolved, type Board } from '../../core/board.ts';
-import type { Size } from '../../core/constants.ts';
+import { applyMove, cloneBoard, encodeBoard, isGoal, type Board } from '../../core/board.ts';
+import type { Rule, Size } from '../../core/constants.ts';
 import type { Move } from '../../core/dice.ts';
 import type { SolveLog } from '../../core/replay.ts';
 
@@ -10,6 +10,8 @@ export type Phase = 'ready' | 'solve' | 'done' | 'retired';
 
 export interface SessionInfo {
   size: Size;
+  /** クリアの条件 */
+  rule: Rule;
   /** ranked = サーバーの問題でランキングに載せられる、practice = 端末で作った問題 */
   mode: 'ranked' | 'practice' | 'tutorial';
   scrambleId: string | null;
@@ -43,7 +45,7 @@ export class Session {
 
   /**
    * 1回の操作で入力された手を適用し、実際に適用できた手を返す。
-   * 途中で全部1になったら、そこで止めて完了にする(それ以降の手は捨てる)。
+   * 途中で揃ったら、そこで止めて完了にする(それ以降の手は捨てる)。
    */
   input(moves: readonly Move[], now: number): Move[] {
     if (this.phase === 'done' || this.phase === 'retired') return [];
@@ -57,7 +59,7 @@ export class Session {
       applied.push(m);
       this.moves += m;
       this.times.push(Math.round(now - this.t0));
-      if (isSolved(this.board)) {
+      if (isGoal(this.board, this.info.rule)) {
         this.phase = 'done';
         this.endTime = this.times[this.times.length - 1];
         break;
@@ -66,7 +68,7 @@ export class Session {
     return applied;
   }
 
-  /** 全部1になって完了したか(呼び出し側の型の絞り込みに引きずられないよう getter にしている) */
+  /** 揃って完了したか(呼び出し側の型の絞り込みに引きずられないよう getter にしている) */
   get solved(): boolean {
     return this.phase === 'done';
   }
@@ -95,7 +97,9 @@ export class Session {
   }
 
   log(): SolveLog {
-    return { scramble: this.scramble, moves: this.moves, times: this.times.slice() };
+    const log: SolveLog = { scramble: this.scramble, moves: this.moves, times: this.times.slice() };
+    if (this.info.rule !== 'ones') log.rule = this.info.rule;
+    return log;
   }
 }
 

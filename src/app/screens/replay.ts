@@ -11,10 +11,12 @@ import {
 } from '../../video/frames.ts';
 import { formatTime } from '../game/session.ts';
 import { t } from '../i18n/index.ts';
+import { lookFor } from '../records.ts';
 import { BOARD_PALETTE } from '../render/boardView.ts';
 import { ReplayTimeline } from '../render/frame.ts';
 import { shareResult, shareText, siteUrl } from '../share.ts';
 import { $, onLeave, showScreen, toast } from '../ui/dom.ts';
+import { sizeLabel } from '../ui/labels.ts';
 import type { VideoMethod } from '../../video/exportVideo.ts';
 import type { ResultMeta } from './play.ts';
 
@@ -30,12 +32,13 @@ export function frameMeta(meta: ResultMeta): FrameMeta {
     timeMs: meta.timeMs,
     moves: meta.moves,
     appName: t('appName'),
-    sizeLabel: t(meta.size === 3 ? 'sizeShort3' : 'sizeShort4'),
+    sizeLabel: sizeLabel(meta.size, meta.rule),
     url: siteUrl().replace(/^https?:\/\//, ''),
     solvedLabel: t('solved'),
     movesLabel: (n) => t('movesCount', { n }),
     fastLabel: t('fastBadge'),
     formatTime,
+    look: lookFor(meta.rule),
   };
 }
 
@@ -166,7 +169,7 @@ async function make(plan: VideoPlan, meta: ResultMeta, method: VideoMethod) {
       },
     });
     if (signal.aborted) return;
-    const name = `dice-roll-${meta.size}x${meta.size}-${formatTime(meta.timeMs).replace(/[:.]/g, '_')}.mp4`;
+    const name = `dice-roll-${meta.size}x${meta.size}${meta.rule === 'aligned' ? '-hard' : ''}-${formatTime(meta.timeMs).replace(/[:.]/g, '_')}.mp4`;
     const file = new File([blob], name, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
     const buttons = [];

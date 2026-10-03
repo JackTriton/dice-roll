@@ -5,6 +5,10 @@ export const APP_NAME = { ja: 'サイコロ8パズル', en: 'Dice Roll 8' } as c
 export type Size = 3 | 4;
 export const SIZES: readonly Size[] = [3, 4];
 
+/** クリアの条件。ones = 全部1が上(ふつう)、aligned = 全部1が上で、しかも正立(2の面が奥)(ハード) */
+export type Rule = 'ones' | 'aligned';
+export const RULES: readonly Rule[] = ['ones', 'aligned'];
+
 /** サーバーが発行した問題の有効期限 */
 export const SCRAMBLE_TTL_MS = 30 * 60_000;
 

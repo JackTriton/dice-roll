@@ -1,9 +1,13 @@
-// 設定: 言語・ニックネーム・端末内の記録の消去。
+// 設定: 言語・ニックネーム・端末内の記録の消去。開発用の版では、ハードのサイコロの見た目も切り替えられる(見比べ用)。
 
+import { alignedExample } from '../../core/aligned.ts';
 import { validateNickname } from '../../core/nickname.ts';
 import { apiEnabled, putProfile } from '../api.ts';
+import { HARD_MODE, LOOK_LAB } from '../flags.ts';
 import { setLang, t, type Lang } from '../i18n/index.ts';
 import { load, resetStats, save } from '../records.ts';
+import { BOARD_PALETTE, drawBoard } from '../render/boardView.ts';
+import type { OneFigure, SideMark } from '../render/dieRenderer.ts';
 import { $, showScreen, toast } from '../ui/dom.ts';
 
 export function initSettings(back: () => void): void {
@@ -38,6 +42,41 @@ export function initSettings(back: () => void): void {
       toast(t('saved'));
     }
   });
+  $('look-settings').hidden = !(HARD_MODE && LOOK_LAB);
+  // 向きの分かる目印が1つも無い組み合わせ(2の面の目印なし + 1は丸)にはしない: もう一方を付ける
+  $<HTMLSelectElement>('look-side').addEventListener('change', (e) => {
+    const side = (e.target as HTMLSelectElement).value as SideMark;
+    save((s) => (s.look = { side, one: side === 'none' && s.look.one === 'dot' ? 'tri' : s.look.one }));
+    showLook();
+  });
+  $<HTMLSelectElement>('look-one').addEventListener('change', (e) => {
+    const one = (e.target as HTMLSelectElement).value as OneFigure;
+    save((s) => (s.look = { side: one === 'dot' && s.look.side === 'none' ? 'bar' : s.look.side, one }));
+    showLook();
+  });
+}
+
+function showLook(): void {
+  const { look } = load();
+  $<HTMLSelectElement>('look-side').value = look.side;
+  $<HTMLSelectElement>('look-one').value = look.one;
+  drawLookPreview();
+}
+
+/** いまの見た目で、見本の盤(2個だけ向きが違う盤)を描く */
+function drawLookPreview(): void {
+  const canvas = $<HTMLCanvasElement>('look-preview');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  const css = canvas.getBoundingClientRect().width || 200;
+  canvas.width = canvas.height = Math.floor(css * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, css, css);
+  drawBoard(ctx, 0, 0, css, { board: alignedExample(3, 'near'), moving: [], t: 0 }, BOARD_PALETTE, {
+    ...load().look,
+    upright: true,
+  });
 }
 
 export function showSettings(lang: Lang): void {
@@ -47,4 +86,5 @@ export function showSettings(lang: Lang): void {
   $('settings-nick-status').textContent = '';
   $('device-id').textContent = s.deviceId.slice(0, 8);
   showScreen('settings');
+  if (HARD_MODE && LOOK_LAB) showLook();
 }

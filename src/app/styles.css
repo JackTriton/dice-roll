@@ -162,6 +162,35 @@ code {
   border-color: var(--accent);
   color: var(--accent);
 }
+.rule-select {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.rule-select button {
+  appearance: none;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.rule-select button span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rule-select button[aria-checked='true'] {
+  border-color: var(--accent);
+}
+.rule-select button[aria-checked='true'] strong {
+  color: var(--accent);
+}
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -383,6 +412,9 @@ progress {
 .tips h3 {
   margin: 0;
 }
+.tips h4 {
+  margin: 10px 0 0;
+}
 .tips-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -425,11 +457,48 @@ progress {
   gap: 6px;
 }
 
+.hard-examples {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.hard-examples figure {
+  margin: 0;
+}
+.hard-examples canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.hard-examples figcaption {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding-top: 4px;
+}
+
 /* 設定 */
 .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+.look-settings {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 10px;
+}
+.look-settings input[type='checkbox'] {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+}
+.look-preview {
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 1;
+  align-self: center;
 }
 
 /* 管理者画面 */

@@ -1,6 +1,7 @@
 import './styles.css';
 import { registerSW } from 'virtual:pwa-register';
 import { decodeBoard } from '../core/board.ts';
+import type { Rule } from '../core/constants.ts';
 import { detectLang, getLang, setLang } from './i18n/index.ts';
 import { load } from './records.ts';
 import { initAdmin, showAdmin } from './screens/admin.ts';
@@ -55,9 +56,9 @@ if (import.meta.env.PROD) registerSW({ immediate: true });
 if (import.meta.env.VITE_E2E === '1') {
   Object.assign(window, {
     __dice: {
-      start(encoded: string) {
+      start(encoded: string, rule: Rule = 'ones') {
         const b = decodeBoard(encoded);
-        if (b) startWithBoard(b);
+        if (b) startWithBoard(b, 'practice', rule);
       },
       session: () => {
         const s = currentSession();

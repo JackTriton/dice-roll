@@ -5,14 +5,19 @@ import { seededRng } from '../../src/core/random.ts';
 import { solve3 } from '../../src/core/table3.ts';
 import { loadOrBuildDist3 } from '../../tools/lib/dist3.ts';
 import { solve4 } from '../../tools/lib/solver4.ts';
+import { loadAlignedTables, solveAligned } from '../../tools/lib/solverAligned.ts';
 
 let dist3: Uint8Array | null = null;
 
-/** 盤面の文字列から、解答の手順を求める(3×3 は最短、4×4 は段階ソルバー) */
-export function solutionFor(scramble: string): Move[] {
-  dist3 ??= loadOrBuildDist3(() => undefined);
+/**
+ * 盤面の文字列から、解答の手順を求める(3×3 は最短、4×4 は段階ソルバー)。
+ * ハード(aligned)は、最短ではないソルバーで解く(初回は窓の表を作るので、数十秒かかる)。
+ */
+export function solutionFor(scramble: string, rule: 'ones' | 'aligned' = 'ones'): Move[] {
   const b = decodeBoard(scramble);
   if (!b) throw new Error(`bad scramble ${scramble}`);
+  if (rule === 'aligned') return solveAligned(b, loadAlignedTables(b.size));
+  dist3 ??= loadOrBuildDist3(() => undefined);
   return b.size === 3 ? solve3(dist3, b) : solve4(b, dist3, seededRng(1));
 }
 

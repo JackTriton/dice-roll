@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>デザインの見比べ(開発用)</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        background: #f4efe6;
+        color: #2a2622;
+        font-family:
+          system-ui,
+          -apple-system,
+          'Hiragino Sans',
+          'Noto Sans JP',
+          'Yu Gothic UI',
+          sans-serif;
+      }
+      h1 {
+        font-size: 1.2rem;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0 0 12px;
+        color: #7a7166;
+        font-size: 0.9rem;
+      }
+      .variant {
+        margin: 0 0 22px;
+      }
+      .variant h2 {
+        font-size: 1rem;
+        margin: 0 0 2px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        max-width: 1200px;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        font-size: 0.8rem;
+        color: #7a7166;
+        text-align: center;
+        padding-top: 2px;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ハードモードの見た目の案(開発用)</h1>
+    <p>
+      同じ盤面を、向きの見せ方を変えて並べています。左から「崩した直後」「あと少し(2個だけ向きが違う)」「そろった」。
+    </p>
+    <div id="lab"></div>
+    <script type="module" src="/src/lab/lab.ts"></script>
+  </body>
+</html>

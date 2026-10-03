@@ -10,6 +10,8 @@ export interface Env {
   ALLOWED_ORIGINS: string;
   /** 管理用 API の合言葉(`wrangler secret put ADMIN_TOKEN` で設定する秘密)。無ければ管理用 API は使えない */
   ADMIN_TOKEN?: string;
+  /** '1' なら、ハード(rule = aligned)を受け付ける(wrangler.toml の [vars]。手元は api/.dev.vars) */
+  HARD_MODE?: string;
 }
 
 function appFor(env: Env) {
@@ -21,6 +23,7 @@ function appFor(env: Env) {
     allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()),
     cache: caches.default,
     adminToken: env.ADMIN_TOKEN || undefined,
+    hardMode: env.HARD_MODE === '1',
   });
 }
 

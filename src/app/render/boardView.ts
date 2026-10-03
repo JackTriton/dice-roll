@@ -1,8 +1,16 @@
 // 盤全体の描画。プレイ画面の Canvas と、動画のコマの両方から使う。
 
 import { BLANK } from '../../core/board.ts';
-import { topPip } from '../../core/dice.ts';
-import { drawDie, drawDieShadow, type DieSpec, type Palette, type Viewport } from './dieRenderer.ts';
+import { UPRIGHT, topPip } from '../../core/dice.ts';
+import {
+  PLAIN_LOOK,
+  drawDie,
+  drawDieShadow,
+  type DieLook,
+  type DieSpec,
+  type Palette,
+  type Viewport,
+} from './dieRenderer.ts';
 import type { FrameState } from './frame.ts';
 
 export interface BoardPalette extends Palette {
@@ -10,6 +18,13 @@ export interface BoardPalette extends Palette {
   cell: string;
   cellDone: string;
 }
+
+/** 盤の見た目の切り替え(ハードで使う) */
+export interface BoardLook extends DieLook {
+  /** 正立(1が上で、2の面が奥)したサイコロだけを、揃った色にする(ハード)。省くと、1が上なら揃った色 */
+  upright?: boolean;
+}
+export { PLAIN_LOOK };
 
 /** 盤とサイコロの配色(明るい配色だけ。ダークモードはやらない) */
 export const BOARD_PALETTE: BoardPalette = {
@@ -22,6 +37,8 @@ export const BOARD_PALETTE: BoardPalette = {
   edge: '#b9b0a2',
   pip: '#23201c',
   pipOne: '#d4102a',
+  mark: '#2f6fd0',
+  markFace: '#dfeaff',
   shadow: 'rgba(60, 40, 20, 0.18)',
 };
 
@@ -45,6 +62,7 @@ export function drawBoard(
   w: number,
   frame: FrameState,
   palette: BoardPalette,
+  look: BoardLook = PLAIN_LOOK,
 ): void {
   const { board, moving, t } = frame;
   const size = board.size;
@@ -57,10 +75,11 @@ export function drawBoard(
   ctx.fill();
 
   const movingFrom = new Set(moving.map((m) => m.from));
+  const isDone = (orient: number) => (look.upright ? orient === UPRIGHT : topPip(orient) === 1);
   for (let i = 0; i < size * size; i++) {
     const [cx, cy] = cellCenter(size, i);
     const done =
-      i !== board.blank && !movingFrom.has(i) && board.cells[i] !== BLANK && topPip(board.cells[i]) === 1;
+      i !== board.blank && !movingFrom.has(i) && board.cells[i] !== BLANK && isDone(board.cells[i]);
     roundRect(
       ctx,
       vp.ox + (cx - 0.47) * cell,
@@ -77,7 +96,7 @@ export function drawBoard(
   for (let i = 0; i < size * size; i++) {
     if (i === board.blank || movingFrom.has(i)) continue;
     const [cx, cy] = cellCenter(size, i);
-    specs.push({ orient: board.cells[i], x: cx, y: cy });
+    specs.push({ orient: board.cells[i], x: cx, y: cy, done: isDone(board.cells[i]) });
   }
   const movingSpecs: DieSpec[] = moving.map((m) => {
     const [cx, cy] = cellCenter(size, m.from);
@@ -85,8 +104,8 @@ export function drawBoard(
   });
   for (const s of specs) drawDieShadow(ctx, s, vp, palette);
   for (const s of movingSpecs) drawDieShadow(ctx, s, vp, palette);
-  for (const s of specs) drawDie(ctx, s, vp, palette);
-  for (const s of movingSpecs) drawDie(ctx, s, vp, palette);
+  for (const s of specs) drawDie(ctx, s, vp, palette, look);
+  for (const s of movingSpecs) drawDie(ctx, s, vp, palette, look);
 }
 
 /** プレイ画面の Canvas。端末の画素密度に合わせて描く */
@@ -95,6 +114,7 @@ export class BoardView {
   private cssSize = 0;
   private dpr = 1;
   palette: BoardPalette = BOARD_PALETTE;
+  look: BoardLook = PLAIN_LOOK;
 
   readonly canvas: HTMLCanvasElement;
 
@@ -122,7 +142,7 @@ export class BoardView {
     const { ctx } = this;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.cssSize, this.cssSize);
-    drawBoard(ctx, 0, 0, this.cssSize, frame, this.palette);
+    drawBoard(ctx, 0, 0, this.cssSize, frame, this.palette, this.look);
   }
 
   /** 画面上の点がどのマスか(盤の外なら -1) */

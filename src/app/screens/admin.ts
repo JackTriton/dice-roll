@@ -2,7 +2,7 @@
 // 不正と判断した記録を消す(BAN = ベスト記録を消してランキングから外す。以後の送信は受け付ける)。
 // 文言は管理者向けなので日本語だけにしている。
 
-import type { Size } from '../../core/constants.ts';
+import type { Rule, Size } from '../../core/constants.ts';
 import {
   adminAttempt,
   adminAttempts,
@@ -17,6 +17,7 @@ import {
   type AdminReplay,
   type ApiResult,
 } from '../api.ts';
+import { HARD_MODE } from '../flags.ts';
 import { formatTime } from '../game/session.ts';
 import { $, showScreen, toast } from '../ui/dom.ts';
 import { showReplay } from './replay.ts';
@@ -24,6 +25,8 @@ import { showReplay } from './replay.ts';
 type Tab = 'ranking' | 'attempts';
 let tab: Tab = 'ranking';
 let size: Size = 3;
+/** 見ているルール(ハードを出していない版では、切り替えを隠す) */
+let rule: Rule = 'ones';
 /** 挑戦の一覧を、特定のプレイヤーに絞り込んでいるとき */
 let player: { deviceId: string; nickname: string | null } | null = null;
 let oldestId: number | null = null;
@@ -60,7 +63,7 @@ export function initAdmin(nav: { back(): void }): void {
     const status = $('admin-login-status');
     if (!token) return;
     status.textContent = '確かめています…';
-    const r = await adminRanking(3, token);
+    const r = await adminRanking(3, 'ones', token);
     if (!r.ok) {
       status.textContent =
         r.status === 401
@@ -84,6 +87,12 @@ export function initAdmin(nav: { back(): void }): void {
   for (const b of document.querySelectorAll<HTMLButtonElement>('#admin-sizes button'))
     b.addEventListener('click', () => {
       size = Number(b.dataset.size) as Size;
+      void render();
+    });
+  $('admin-rules').hidden = !HARD_MODE;
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#admin-rules button'))
+    b.addEventListener('click', () => {
+      rule = b.dataset.rule as Rule;
       void render();
     });
   $('btn-admin-more').addEventListener('click', () => void loadAttempts(true));
@@ -115,6 +124,8 @@ async function render(): Promise<void> {
     b.setAttribute('aria-selected', String(b.dataset.tab === tab));
   for (const b of document.querySelectorAll<HTMLButtonElement>('#admin-sizes button'))
     b.setAttribute('aria-selected', String(Number(b.dataset.size) === size));
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#admin-rules button'))
+    b.setAttribute('aria-selected', String(b.dataset.rule === rule));
   $('admin-filter').textContent =
     tab === 'attempts' && player
       ? `${nameOf(player.nickname)}(端末 ${player.deviceId.slice(0, 8)})の挑戦`
@@ -158,7 +169,7 @@ async function loadRanking(): Promise<void> {
   list.replaceChildren();
   $('btn-admin-more').hidden = true;
   $('admin-status').textContent = '読み込んでいます…';
-  const r = await adminRanking(size);
+  const r = await adminRanking(size, rule);
   if (my !== seq || failed(r) || !r.ok) return;
   $('admin-status').textContent = r.data.entries.length ? '' : 'まだ記録がありません';
   r.data.entries.forEach((e: AdminRankingEntry, i) => {
@@ -191,6 +202,7 @@ async function loadAttempts(append: boolean): Promise<void> {
   const r = await adminAttempts({
     deviceId: player?.deviceId,
     size,
+    rule,
     before: append ? (oldestId ?? undefined) : undefined,
   });
   if (my !== seq || failed(r) || !r.ok) return;
@@ -223,7 +235,7 @@ async function openAttempt(id: number): Promise<void> {
 }
 
 async function openBest(e: AdminRankingEntry): Promise<void> {
-  const r = await adminBest(e.deviceId, size);
+  const r = await adminBest(e.deviceId, size, rule);
   if (failed(r) || !r.ok) return;
   openReplay(r.data);
 }
@@ -238,7 +250,7 @@ function analysis(r: AdminReplay, moves: string, times: number[]): string {
     .sort((a, b) => a - b);
   const median = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
   const lines = [
-    `${nameOf(r.nickname)} · ${r.size}×${r.size} · ${dateOf(r.createdAt)}`,
+    `${nameOf(r.nickname)} · ${r.size}×${r.size}${r.rule === 'aligned' ? ' ハード' : ''} · ${dateOf(r.createdAt)}`,
     `タイム ${formatTime(r.timeMs ?? times[times.length - 1])}秒 · ${movesText(moves.length, r.optimal)}`,
     `1秒あたり ${(moves.length / span).toFixed(1)}手 · 操作の間隔 中央値 ${median}ms / 最短 ${gaps[0] ?? 0}ms · 操作 ${gaps.length + 1}回`,
   ];
@@ -253,8 +265,14 @@ function openReplay(r: AdminReplay): void {
     return;
   }
   showReplay(
-    { scramble: r.scramble, moves: r.moves, times: r.times },
-    { size: r.size, timeMs: r.timeMs ?? r.times[r.times.length - 1], moves: r.moves.length, rank: null },
+    { scramble: r.scramble, moves: r.moves, times: r.times, rule: r.rule ?? 'ones' },
+    {
+      size: r.size,
+      rule: r.rule ?? 'ones',
+      timeMs: r.timeMs ?? r.times[r.times.length - 1],
+      moves: r.moves.length,
+      rank: null,
+    },
     { back: () => showAdmin(), info: analysis(r, r.moves, r.times) },
   );
 }
@@ -262,11 +280,11 @@ function openReplay(r: AdminReplay): void {
 async function deleteScore(e: AdminRankingEntry): Promise<void> {
   if (
     !confirm(
-      `${nameOf(e.nickname)} の ${size}×${size} のベスト記録(${formatTime(e.timeMs)}秒)を消して、ランキングから外しますか?`,
+      `${nameOf(e.nickname)} の ${size}×${size}${rule === 'aligned' ? ' ハード' : ''} のベスト記録(${formatTime(e.timeMs)}秒)を消して、ランキングから外しますか?`,
     )
   )
     return;
-  const r = await adminDeleteScore(e.deviceId, size);
+  const r = await adminDeleteScore(e.deviceId, size, rule);
   if (failed(r) || !r.ok) return;
   toast(r.data.deleted ? '記録を消しました' : '記録は見つかりませんでした');
   void render();

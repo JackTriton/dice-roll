@@ -3,6 +3,7 @@
 // 時間割りはゲーム中の表示とリプレイ動画の両方で同じ関数を使い、動画の動きをプレイ中の見た目と一致させる。
 
 import { applyMove, cloneBoard, decodeBoard, type Board } from './board.ts';
+import type { Rule } from './constants.ts';
 import type { Move } from './dice.ts';
 
 export interface SolveLog {
@@ -12,6 +13,8 @@ export interface SolveLog {
   moves: string;
   /** 1手ごとの時刻(計測開始からのミリ秒)。同じ時刻の手は1回の操作でまとめて転がしたもの */
   times: number[];
+  /** クリアの条件(無ければ ones) */
+  rule?: Rule;
 }
 
 export const solveTime = (log: SolveLog): number => log.times[log.times.length - 1] ?? 0;

@@ -1,8 +1,17 @@
 // 端末内の記録と設定(localStorage)。使えない環境ではメモリだけで動く。
 
-import type { Size } from '../core/constants.ts';
+import type { Rule, Size } from '../core/constants.ts';
 import type { SolveLog } from '../core/replay.ts';
+import { HARD_MODE, LOOK_LAB } from './flags.ts';
 import type { Lang } from './i18n/index.ts';
+import { PLAIN_LOOK, type BoardLook } from './render/boardView.ts';
+import {
+  ONE_FIGURES,
+  SIDE_MARKS,
+  type DieLook,
+  type OneFigure,
+  type SideMark,
+} from './render/dieRenderer.ts';
 
 export interface SizeStats {
   best: number | null;
@@ -20,10 +29,36 @@ export interface Store {
   lang: Lang | null;
   nickname: string | null;
   size: Size;
+  /** 選んでいるルール */
+  rule: Rule;
   stats: Record<'3' | '4', SizeStats>;
+  /** ハード(向きまで揃える)の記録 */
+  hardStats: Record<'3' | '4', SizeStats>;
+  /** ハードのサイコロの見た目(見比べ用に、開発用の版の設定で切り替えたもの。本番では使わない) */
+  look: DieLook;
+  /** look を保存したときの、既定の見た目の版(LOOK_REV) */
+  lookRev: number;
 }
 
 const KEY = 'diceroll.v1';
+
+/** ハードのサイコロの見た目(Q#34 で決定): 1の目を三角にし、2の面のある縁に青い線を引く */
+export const DEFAULT_LOOK: DieLook = { side: 'bar', one: 'tri' };
+
+/**
+ * 既定の見た目を変えるたびに上げる番号。これより前に保存された見た目は、既定に置き換える
+ * (見比べのために選んでいた案が残って、決めた見た目にならないのを防ぐ)。
+ */
+const LOOK_REV = 1;
+
+/** 保存されていた見た目のうち、いまは無い値を既定に直す */
+function normalizeLook(raw: unknown): DieLook {
+  const r = (raw ?? {}) as { side?: unknown; one?: unknown };
+  const side = SIDE_MARKS.includes(r.side as SideMark) ? (r.side as SideMark) : DEFAULT_LOOK.side;
+  const one = ONE_FIGURES.includes(r.one as OneFigure) ? (r.one as OneFigure) : DEFAULT_LOOK.one;
+  // 向きの分かる目印が1つも無い組み合わせは、既定に戻す
+  return side === 'none' && one === 'dot' ? { ...DEFAULT_LOOK } : { side, one };
+}
 
 const emptyStats = (): SizeStats => ({
   best: null,
@@ -42,7 +77,11 @@ function freshStore(): Store {
     lang: null,
     nickname: null,
     size: 3,
+    rule: 'ones',
     stats: { '3': emptyStats(), '4': emptyStats() },
+    hardStats: { '3': emptyStats(), '4': emptyStats() },
+    look: { ...DEFAULT_LOOK },
+    lookRev: LOOK_REV,
   };
 }
 
@@ -60,6 +99,9 @@ export function load(): Store {
     const raw = localStorage.getItem(KEY);
     const parsed = raw ? (JSON.parse(raw) as Store) : null;
     memory = parsed && parsed.v === 1 && parsed.deviceId ? { ...freshStore(), ...parsed } : freshStore();
+    if (memory.rule !== 'aligned') memory.rule = 'ones';
+    memory.look = parsed?.lookRev === LOOK_REV ? normalizeLook(memory.look) : { ...DEFAULT_LOOK };
+    memory.lookRev = LOOK_REV;
     localStorage.setItem(KEY, JSON.stringify(memory));
   } catch {
     persistent = false;
@@ -81,6 +123,19 @@ export function save(update: (s: Store) => void): Store {
   return s;
 }
 
+export const statsOf = (s: Store, rule: Rule, size: Size): SizeStats =>
+  (rule === 'aligned' ? s.hardStats : s.stats)[String(size) as '3' | '4'];
+
+/** いま選んでいるルール(ハードを出していない版では、いつも ones) */
+export const activeRule = (): Rule => (HARD_MODE ? load().rule : 'ones');
+
+/** そのルールで使う盤の見た目 */
+/** ハードのサイコロの見た目。見比べ用の切り替えを出していない版では、いつも決めた見た目 */
+export const hardLook = (): DieLook => (LOOK_LAB ? load().look : DEFAULT_LOOK);
+
+export const lookFor = (rule: Rule): BoardLook =>
+  rule === 'aligned' ? { ...hardLook(), upright: true } : PLAIN_LOOK;
+
 export interface SolveOutcome {
   newBest: boolean;
   ao5: number | null;
@@ -91,7 +146,7 @@ export interface SolveOutcome {
 export function recordSolve(size: Size, log: SolveLog, timeMs: number): SolveOutcome {
   let outcome: SolveOutcome = { newBest: false, ao5: null, newBestAo5: false };
   save((s) => {
-    const st = s.stats[String(size) as '3' | '4'];
+    const st = statsOf(s, log.rule ?? 'ones', size);
     st.count++;
     st.lastReplay = log;
     const newBest = st.best === null || timeMs < st.best;
@@ -112,5 +167,6 @@ export function recordSolve(size: Size, log: SolveLog, timeMs: number): SolveOut
 export function resetStats(): void {
   save((s) => {
     s.stats = { '3': emptyStats(), '4': emptyStats() };
+    s.hardStats = { '3': emptyStats(), '4': emptyStats() };
   });
 }

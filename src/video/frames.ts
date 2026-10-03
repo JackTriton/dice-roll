@@ -5,7 +5,7 @@
 
 import { X_VIDEO_LIMIT_MS, type Size } from '../core/constants.ts';
 import type { ReplayTimeline } from '../app/render/frame.ts';
-import { drawBoard, type BoardPalette } from '../app/render/boardView.ts';
+import { drawBoard, type BoardLook, type BoardPalette } from '../app/render/boardView.ts';
 
 export const LEAD_IN_MS = 1000;
 export const TAIL_MS = 400;
@@ -51,6 +51,8 @@ export interface FrameMeta {
   movesLabel: (n: number) => string;
   fastLabel: string;
   formatTime: (ms: number) => string;
+  /** 盤の見た目(ハードの目印など。無ければふつうの見た目) */
+  look?: BoardLook;
 }
 
 export interface FrameColors {
@@ -116,7 +118,7 @@ export function drawVideoFrame(
 
   // 盤
   const bw = W * 0.7;
-  drawBoard(ctx, (W - bw) / 2, W * 0.25, bw, plan.timeline.frameAt(timer), palette);
+  drawBoard(ctx, (W - bw) / 2, W * 0.25, bw, plan.timeline.frameAt(timer), palette, meta.look);
 
   // URL
   ctx.fillStyle = colors.muted;

@@ -1,13 +1,15 @@
 // ランキング画面
 
-import type { Size } from '../../core/constants.ts';
+import type { Rule, Size } from '../../core/constants.ts';
 import { apiEnabled, fetchRanking } from '../api.ts';
+import { HARD_MODE } from '../flags.ts';
 import { formatTime } from '../game/session.ts';
 import { t } from '../i18n/index.ts';
-import { load } from '../records.ts';
+import { activeRule, load } from '../records.ts';
 import { $, showScreen } from '../ui/dom.ts';
 
 let size: Size = 3;
+let rule: Rule = 'ones';
 let seq = 0;
 
 export function initRanking(back: () => void): void {
@@ -17,10 +19,19 @@ export function initRanking(back: () => void): void {
       size = Number(b.dataset.size) as Size;
       void render();
     });
+  // ルールの切り替え(ハードを出していない版では隠す)
+  $('ranking-rules').hidden = !HARD_MODE;
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#ranking-rules button'))
+    b.addEventListener('click', () => {
+      rule = b.dataset.rule as Rule;
+      void render();
+    });
 }
 
 export function showRanking(): void {
+  // 最初は、タイトルで選んでいる大きさとルールのランキングを出す
   size = load().size;
+  rule = activeRule();
   showScreen('ranking');
   void render();
 }
@@ -29,6 +40,8 @@ async function render(): Promise<void> {
   const my = ++seq;
   for (const b of document.querySelectorAll<HTMLButtonElement>('#ranking-tabs button'))
     b.setAttribute('aria-selected', String(Number(b.dataset.size) === size));
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#ranking-rules button'))
+    b.setAttribute('aria-selected', String(b.dataset.rule === rule));
   const list = $('ranking-list');
   const status = $('ranking-status');
   const me = $('ranking-me');
@@ -44,7 +57,7 @@ async function render(): Promise<void> {
     return;
   }
   status.textContent = '…';
-  const r = await fetchRanking(size, load().deviceId);
+  const r = await fetchRanking(size, load().deviceId, rule);
   if (my !== seq) return;
   if (!r.ok) {
     status.textContent = r.status === 0 ? t('rankingOffline') : t('rankingUnavailable');
