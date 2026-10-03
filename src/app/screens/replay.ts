@@ -20,6 +20,9 @@ import type { ResultMeta } from './play.ts';
 
 let raf = 0;
 let current: { log: SolveLog; meta: ResultMeta } | null = null;
+/** 戻るボタンの行き先(既定はタイトル。管理者画面から開いたときは管理者画面) */
+let back: () => void = () => undefined;
+let defaultBack: () => void = () => undefined;
 
 export function frameMeta(meta: ResultMeta): FrameMeta {
   return {
@@ -37,7 +40,8 @@ export function frameMeta(meta: ResultMeta): FrameMeta {
 }
 
 export function initReplay(nav: { back(): void }): void {
-  $('btn-replay-back').addEventListener('click', nav.back);
+  defaultBack = nav.back;
+  $('btn-replay-back').addEventListener('click', () => back());
   $('btn-replay-again').addEventListener('click', () => current && play(current.log, current.meta));
   $('btn-replay-video').addEventListener(
     'click',
@@ -46,8 +50,16 @@ export function initReplay(nav: { back(): void }): void {
   onLeave('replay', () => cancelAnimationFrame(raf));
 }
 
-export function showReplay(log: SolveLog, meta: ResultMeta): void {
+export function showReplay(
+  log: SolveLog,
+  meta: ResultMeta,
+  opts: { back?: () => void; info?: string } = {},
+): void {
   current = { log, meta };
+  back = opts.back ?? defaultBack;
+  const info = $('replay-info');
+  info.hidden = !opts.info;
+  info.textContent = opts.info ?? '';
   showScreen('replay');
   play(log, meta);
 }

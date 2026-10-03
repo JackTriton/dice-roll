@@ -53,6 +53,54 @@ test('a nickname saved only on the device is registered when the solve is submit
   await expect(page.locator('#ranking-list li.me')).toContainText(nick);
 });
 
+test('the admin screen replays any attempt and can take a record off the ranking', async ({ page }) => {
+  await openApp(page);
+  await page.waitForTimeout(2500);
+  await page.click('#btn-start');
+  await expect(page.locator('#play-mode')).toHaveText('ランキング');
+  const s = await session(page);
+  for (const m of solutionFor(s!.scramble)) {
+    await page.keyboard.press(KEY[m]);
+    await page.waitForTimeout(80);
+  }
+  const nick = `管理${Math.floor(Math.random() * 1000)}`;
+  await page.fill('#nick-input', nick);
+  await page.click('#nick-form button[type="submit"]');
+  await expect(page.locator('#result-rank')).toContainText(/ランキング \d+位/);
+
+  // #admin を開いて合言葉を入れる(手元の Worker は api/.dev.vars の ADMIN_TOKEN)
+  await page.goto('/#admin');
+  await expect(page.locator('#screen-admin')).toBeVisible();
+  await page.fill('#admin-token', 'wrong-token');
+  await page.click('#admin-login button[type="submit"]');
+  await expect(page.locator('#admin-login-status')).toHaveText('トークンが違います');
+  await page.fill('#admin-token', 'dev-admin-token');
+  await page.click('#admin-login button[type="submit"]');
+  const mine = page.locator('#admin-list li', { hasText: nick });
+  await expect(mine).toBeVisible();
+
+  // ベストを再生すると、判断用の数字が出る
+  await mine.getByRole('button', { name: 'ベストを再生' }).click();
+  await expect(page.locator('#screen-replay')).toBeVisible();
+  await expect(page.locator('#replay-info')).toContainText('最短');
+  await expect(page.locator('#replay-info')).toContainText('1秒あたり');
+  await page.click('#btn-replay-back');
+  await expect(page.locator('#screen-admin')).toBeVisible();
+
+  // 挑戦の一覧から再生できる
+  await page.locator('#admin-list li', { hasText: nick }).getByRole('button', { name: '挑戦の一覧' }).click();
+  await expect(page.locator('#admin-filter')).toContainText(nick);
+  await page.locator('#admin-list li').first().getByRole('button', { name: '再生' }).click();
+  await expect(page.locator('#screen-replay')).toBeVisible();
+  await page.click('#btn-replay-back');
+
+  // 記録を消すと、ランキングから外れる
+  await page.click('#admin-tabs [data-tab="ranking"]');
+  page.once('dialog', (d) => void d.accept());
+  await page.locator('#admin-list li', { hasText: nick }).getByRole('button', { name: '記録を消す' }).click();
+  await expect(page.locator('#admin-list li', { hasText: nick })).toHaveCount(0);
+});
+
 test('a tampered submission is rejected by the server', async ({ page, request }) => {
   await openApp(page);
   const deviceId = await page.evaluate(

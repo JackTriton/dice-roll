@@ -129,6 +129,7 @@
           <h2 data-i18n="replay">リプレイ</h2>
           <span></span>
         </header>
+        <p class="note admin-info" id="replay-info" hidden></p>
         <canvas id="replay-canvas" class="replay-canvas"></canvas>
         <div class="row center">
           <button type="button" class="btn" id="btn-replay-again" data-i18n="replay">リプレイ</button>
@@ -218,6 +219,37 @@
         <button type="button" class="btn ghost" id="btn-reset" data-i18n="resetRecords">
           端末内の記録を消す
         </button>
+      </section>
+
+      <!-- 管理者画面(URL の末尾に #admin を付けて開く。文言は管理者向けなので日本語だけ) -->
+      <section id="screen-admin" class="screen" hidden>
+        <header class="page-bar">
+          <button type="button" class="btn small ghost" id="btn-admin-back">戻る</button>
+          <h2>管理者画面</h2>
+          <button type="button" class="btn small ghost" id="btn-admin-logout" hidden>ログアウト</button>
+        </header>
+        <form class="field" id="admin-login" hidden>
+          <span>管理用トークン</span>
+          <div class="row">
+            <input id="admin-token" type="password" autocomplete="off" />
+            <button type="submit" class="btn small">入る</button>
+          </div>
+          <span class="note" id="admin-login-status"></span>
+        </form>
+        <div id="admin-body" class="admin-body" hidden>
+          <div class="size-select" role="tablist" id="admin-tabs">
+            <button type="button" role="tab" data-tab="ranking">ランキング</button>
+            <button type="button" role="tab" data-tab="attempts">挑戦の一覧</button>
+          </div>
+          <div class="size-select" role="tablist" id="admin-sizes">
+            <button type="button" role="tab" data-size="3">3×3</button>
+            <button type="button" role="tab" data-size="4">4×4</button>
+          </div>
+          <p class="note" id="admin-filter"></p>
+          <ol class="admin-list" id="admin-list"></ol>
+          <button type="button" class="btn ghost" id="btn-admin-more" hidden>もっと見る</button>
+          <p class="note" id="admin-status"></p>
+        </div>
       </section>
 
       <!-- 動画 -->

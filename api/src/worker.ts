@@ -8,6 +8,8 @@ export interface Env {
   DB: D1Database;
   /** 許可するオリジン(カンマ区切り)。例: https://<user>.github.io */
   ALLOWED_ORIGINS: string;
+  /** 管理用 API の合言葉(`wrangler secret put ADMIN_TOKEN` で設定する秘密)。無ければ管理用 API は使えない */
+  ADMIN_TOKEN?: string;
 }
 
 function appFor(env: Env) {
@@ -18,6 +20,7 @@ function appFor(env: Env) {
     rng: cryptoRng(),
     allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()),
     cache: caches.default,
+    adminToken: env.ADMIN_TOKEN || undefined,
   });
 }
 

@@ -432,6 +432,55 @@ progress {
   gap: 6px;
 }
 
+/* 管理者画面 */
+.admin-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-list li {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.admin-list li.rejected {
+  opacity: 0.7;
+}
+.admin-list .head {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.admin-list .head strong {
+  font-size: 1.05rem;
+}
+.admin-list .sub {
+  color: var(--muted);
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+.admin-list .actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.admin-info {
+  white-space: pre-line;
+}
+
 /* リプレイ */
 .replay-canvas {
   width: 100%;

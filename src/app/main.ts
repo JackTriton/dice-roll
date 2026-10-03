@@ -3,6 +3,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { decodeBoard } from '../core/board.ts';
 import { detectLang, getLang, setLang } from './i18n/index.ts';
 import { load } from './records.ts';
+import { initAdmin, showAdmin } from './screens/admin.ts';
 import { initHowto, showHowto } from './screens/howto.ts';
 import { currentSession, initPlay, startGame, startTutorial, startWithBoard } from './screens/play.ts';
 import { initRanking, showRanking } from './screens/ranking.ts';
@@ -34,8 +35,18 @@ initSettings(() => {
   refreshTitle();
   showTitle();
 });
+initAdmin({
+  back: () => {
+    // #admin を URL から外してタイトルへ
+    history.replaceState(null, '', location.pathname + location.search);
+    showTitle();
+  },
+});
 
-showTitle();
+// URL の末尾が #admin なら管理者画面を開く
+const route = () => (location.hash === '#admin' ? showAdmin() : showTitle());
+window.addEventListener('hashchange', route);
+route();
 
 // 新しい版があれば、次に起動したときに切り替わる
 if (import.meta.env.PROD) registerSW({ immediate: true });

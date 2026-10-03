@@ -4,7 +4,7 @@ export function $<T extends HTMLElement = HTMLElement>(id: string): T {
   return el as T;
 }
 
-export type ScreenId = 'title' | 'play' | 'replay' | 'ranking' | 'howto' | 'settings';
+export type ScreenId = 'title' | 'play' | 'replay' | 'ranking' | 'howto' | 'settings' | 'admin';
 
 let currentScreen: ScreenId = 'title';
 const leaveHandlers = new Map<ScreenId, () => void>();

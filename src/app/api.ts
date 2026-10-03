@@ -7,12 +7,17 @@ export const apiEnabled = BASE !== '';
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: string };
 
-async function call<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
+async function call<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  extraHeaders: Record<string, string> = {},
+): Promise<ApiResult<T>> {
   if (!apiEnabled) return { ok: false, status: 0, error: 'disabled' };
   try {
     const res = await fetch(BASE + path, {
       method,
-      headers: body ? { 'content-type': 'application/json' } : undefined,
+      headers: { ...(body ? { 'content-type': 'application/json' } : {}), ...extraHeaders },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(8000),
     });
@@ -112,3 +117,87 @@ export async function takeScramble(
     await new Promise((r) => setTimeout(r, RETRY_AFTER_MS));
   }
 }
+
+// ---- 管理用(#admin)。合言葉(管理用トークン)は、管理者の端末の localStorage にだけ保存する ----
+
+const ADMIN_KEY = 'diceroll.admin';
+
+export function getAdminToken(): string | null {
+  try {
+    return localStorage.getItem(ADMIN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAdminToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(ADMIN_KEY, token);
+    else localStorage.removeItem(ADMIN_KEY);
+  } catch {
+    // 保存できなくても、この画面を開いている間は使える
+  }
+}
+
+const adminCall = <T>(method: string, path: string, token = getAdminToken() ?? '') =>
+  call<T>(method, path, undefined, { authorization: `Bearer ${token}` });
+
+export interface AdminRankingEntry {
+  deviceId: string;
+  nickname: string | null;
+  timeMs: number;
+  moves: number;
+  optimal: number | null;
+  createdAt: number;
+  attempts: number;
+}
+
+export interface AdminAttemptSummary {
+  id: number;
+  deviceId: string;
+  nickname: string | null;
+  size: Size;
+  timeMs: number | null;
+  moves: number | null;
+  optimal: number | null;
+  accepted: number;
+  reason: string | null;
+  createdAt: number;
+}
+
+/** リプレイ1件分(挑戦、またはベスト記録) */
+export interface AdminReplay {
+  deviceId: string;
+  nickname: string | null;
+  size: Size;
+  scramble: string;
+  optimal: number | null;
+  moves: string | null;
+  times: number[] | null;
+  timeMs: number | null;
+  createdAt: number;
+  accepted?: number;
+  reason?: string | null;
+}
+
+export const adminRanking = (size: Size, token?: string) =>
+  adminCall<{ size: Size; entries: AdminRankingEntry[] }>('GET', `/api/v1/admin/ranking?size=${size}`, token);
+
+export function adminAttempts(q: { deviceId?: string; size?: Size; before?: number }) {
+  const p = new URLSearchParams();
+  if (q.deviceId) p.set('deviceId', q.deviceId);
+  if (q.size) p.set('size', String(q.size));
+  if (q.before) p.set('before', String(q.before));
+  return adminCall<{ attempts: AdminAttemptSummary[] }>('GET', `/api/v1/admin/attempts?${p}`);
+}
+
+export const adminAttempt = (id: number) => adminCall<AdminReplay>('GET', `/api/v1/admin/attempts/${id}`);
+
+export const adminBest = (deviceId: string, size: Size) =>
+  adminCall<AdminReplay>('GET', `/api/v1/admin/best?deviceId=${encodeURIComponent(deviceId)}&size=${size}`);
+
+export const adminDeleteScore = (deviceId: string, size: Size) =>
+  adminCall<{ deleted: number }>(
+    'DELETE',
+    `/api/v1/admin/scores?deviceId=${encodeURIComponent(deviceId)}&size=${size}`,
+  );
