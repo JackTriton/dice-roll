@@ -1,7 +1,7 @@
 // リプレイ動画: MP4 を書き出し、長さが「プレイの時間割り + 前後の演出」と 0.1 秒以内で合うことを確かめる。
 // H.264 の書き出しには Edge / Chrome が要る(Playwright 同梱の Chromium では作れないことがある)。
 import { readFileSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.ts';
 import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { ReplayTimeline } from '../../src/app/render/frame.ts';
 import { planVideo } from '../../src/video/frames.ts';

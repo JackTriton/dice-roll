@@ -156,6 +156,14 @@ export class BoardView {
     return r * size + c;
   }
 
+  /** 画面上の点を、マスを単位にした座標にする(盤の左上が 0,0。盤の外では、負や size 以上になる) */
+  cellPos(clientX: number, clientY: number, size: number): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    const pad = rect.width * 0.035;
+    const cell = (rect.width - pad * 2) / size;
+    return { x: (clientX - rect.left - pad) / cell, y: (clientY - rect.top - pad) / cell };
+  }
+
   cellPx(size: number): number {
     const rect = this.canvas.getBoundingClientRect();
     return (rect.width * (1 - 0.07)) / size;

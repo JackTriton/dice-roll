@@ -74,6 +74,8 @@ export const en: Messages = {
 
   howtoTitle: 'How to play',
   rule1: 'Swipe to roll the die next to the empty cell in that direction.',
+  rule1Blank:
+    'Hold the empty cell and drag it. The die in each cell your finger enters rolls into the empty cell.',
   rule2: 'Each roll changes the face on top.',
   rule3: 'Make every die show 1 on top. The faster, the better.',
   rule4:
@@ -81,11 +83,14 @@ export const en: Messages = {
   rule5: 'The timer starts with your first roll.',
   rule6:
     'Tap a die in the same row or column as the empty cell to roll several at once. Arrow keys work on PC.',
+  rule6Blank:
+    'Touch a die in the same row or column as the empty cell to roll several at once. On PC, the arrow keys move the empty cell.',
   rule7:
     'In the ranking, solvers (programs that work out the moves) are not allowed. Records made with one will be removed.',
   tutorialStart: 'Try the practice puzzles',
   tutorialN: 'Practice {n}/3',
   tut1: 'The left die has its 1 facing left. Swipe right to roll it…',
+  tut1Blank: 'The left die has its 1 facing left. Slide your finger left from the empty cell to roll it…',
   tut2: 'Roll two dice, one after the other.',
   tut3: 'Two neighbors need a loop of the empty cell around them.',
   tutNice: 'Nice!',
@@ -96,6 +101,8 @@ export const en: Messages = {
   retry: 'Retry',
   showAnswer: 'Show answer',
   answerLabel: 'Answer: {moves}',
+  arrowsDice: 'Arrows show the direction to swipe.',
+  arrowsBlank: 'Arrows show the direction to move the empty cell.',
   answerDone: "That's the answer. Tap Retry and solve it yourself!",
   tipsTitle: 'When only one die is off',
   tipsNote:
@@ -164,6 +171,18 @@ export const en: Messages = {
 
   settingsTitle: 'Settings',
   language: 'Language',
+  control: 'Controls',
+  controlBlank: 'Move the empty cell',
+  controlDice: 'Move the dice (previous controls)',
+  controlBlankNote:
+    'Hold the empty cell and drag it. The die in each cell your finger enters rolls into the empty cell. On PC, the arrow keys move the empty cell too.',
+  controlDiceNote:
+    'Swipe to roll the die next to the empty cell in that direction. On PC, the arrow keys move the dice too.',
+  controlNewTitle: 'New controls',
+  controlNewBody:
+    'Hold the empty cell and drag it: the die in each cell your finger enters rolls (on PC, the arrow keys now move the empty cell). You can switch back to the previous controls in Settings at any time.',
+  controlNewKeep: 'Use the new controls',
+  controlNewBack: 'Keep the previous controls',
   nickname: 'Nickname',
   save: 'Save',
   saved: 'Saved',

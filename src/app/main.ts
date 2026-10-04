@@ -2,7 +2,8 @@ import './styles.css';
 import { decodeBoard } from '../core/board.ts';
 import type { Rule } from '../core/constants.ts';
 import { detectLang, getLang, setLang } from './i18n/index.ts';
-import { load } from './records.ts';
+import type { ControlMode } from './input/gestures.ts';
+import { load, save } from './records.ts';
 import { initAdmin, showAdmin } from './screens/admin.ts';
 import { initHowto, showHowto } from './screens/howto.ts';
 import { currentSession, initPlay, startGame, startTutorial, startWithBoard } from './screens/play.ts';
@@ -60,6 +61,21 @@ initAdmin({
     showTitle();
   },
 });
+
+// 操作が変わったことを、これまでの版から使っている人に一度だけ知らせる(その場で、これまでの操作に戻せる)
+if (store.controlNotice) {
+  const dialog = $('control-dialog');
+  const choose = (control: ControlMode) => {
+    save((s) => {
+      s.control = control;
+      s.controlNotice = false;
+    });
+    dialog.hidden = true;
+  };
+  $('btn-control-new').addEventListener('click', () => choose('blank'));
+  $('btn-control-old').addEventListener('click', () => choose('dice'));
+  dialog.hidden = false;
+}
 
 // URL の末尾が #admin なら管理者画面を開く
 const route = () => (location.hash === '#admin' ? showAdmin() : showTitle());

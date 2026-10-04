@@ -179,12 +179,12 @@
         </header>
         <canvas id="howto-demo" class="howto-demo" aria-hidden="true"></canvas>
         <ol class="rules">
-          <li data-i18n="rule1"></li>
+          <li id="rule-1" data-i18n="rule1"></li>
           <li data-i18n="rule2"></li>
           <li data-i18n="rule3"></li>
           <li data-i18n="rule4"></li>
           <li data-i18n="rule5"></li>
-          <li data-i18n="rule6"></li>
+          <li id="rule-6" data-i18n="rule6"></li>
           <li data-i18n="rule7"></li>
         </ol>
         <button type="button" class="btn primary" id="btn-tutorial" data-i18n="tutorialStart">
@@ -193,6 +193,7 @@
         <section class="tips" aria-labelledby="tips-title">
           <h3 id="tips-title" data-i18n="tipsTitle">1個だけ揃っていないとき</h3>
           <p class="note" data-i18n="tipsNote"></p>
+          <p class="note arrows-note"></p>
           <div class="size-select" role="tablist" id="tips-mode">
             <button type="button" role="tab" data-mode="solve" data-i18n="tipsModeSolve">
               そのまま揃える
@@ -220,6 +221,7 @@
           </div>
           <h4 data-i18n="hardTipsTitle">1は全部上で、向きだけがずれているとき</h4>
           <p class="note" data-i18n="hardTipsNote"></p>
+          <p class="note arrows-note"></p>
           <div class="size-select" role="tablist" id="hard-tips-mode">
             <button type="button" role="tab" data-mode="solve" data-i18n="tipsModeSolve">
               そのまま揃える
@@ -246,6 +248,14 @@
             <option value="ja">日本語</option>
             <option value="en">English</option>
           </select>
+        </label>
+        <label class="field">
+          <span data-i18n="control">操作</span>
+          <select id="control-select">
+            <option value="blank" data-i18n="controlBlank">空きマスを動かす</option>
+            <option value="dice" data-i18n="controlDice">サイコロを動かす(これまでの操作)</option>
+          </select>
+          <span class="note" id="control-note"></span>
         </label>
         <form class="field" id="settings-nick-form">
           <span data-i18n="nickname">ニックネーム</span>
@@ -336,6 +346,22 @@
       </section>
 
       <!-- 動画 -->
+      <!-- 操作が変わったことの知らせ(これまでの版から使っている人に、一度だけ出す) -->
+      <div class="result" id="control-dialog" hidden>
+        <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="control-dialog-title">
+          <h2 id="control-dialog-title" data-i18n="controlNewTitle">操作が新しくなりました</h2>
+          <p data-i18n="controlNewBody"></p>
+          <div class="result-actions stacked">
+            <button type="button" class="btn primary" id="btn-control-new" data-i18n="controlNewKeep">
+              新しい操作で遊ぶ
+            </button>
+            <button type="button" class="btn" id="btn-control-old" data-i18n="controlNewBack">
+              これまでの操作に戻す
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="result" id="video-dialog" hidden>
         <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="video-title">
           <h2 id="video-title" data-i18n="videoTitle">リプレイ動画</h2>

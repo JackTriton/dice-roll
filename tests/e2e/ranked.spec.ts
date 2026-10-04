@@ -1,6 +1,6 @@
 // ランキングの通しテスト。ローカルの Worker(npm run dev:api)を立ててから、E2E_API を付けて実行する:
 //   E2E_API=http://localhost:8787 npx playwright test ranked
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.ts';
 import { KEY, session, openApp, solutionFor } from './helpers.ts';
 
 test.skip(!process.env.E2E_API, 'E2E_API が無いのでランキングのテストは飛ばす');

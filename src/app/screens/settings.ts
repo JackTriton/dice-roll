@@ -5,6 +5,7 @@ import { validateNickname } from '../../core/nickname.ts';
 import { apiEnabled, putProfile } from '../api.ts';
 import { HARD_MODE, LOOK_LAB } from '../flags.ts';
 import { setLang, t, type Lang } from '../i18n/index.ts';
+import type { ControlMode } from '../input/gestures.ts';
 import { load, resetStats, save } from '../records.ts';
 import { BOARD_PALETTE, drawBoard } from '../render/boardView.ts';
 import type { OneFigure, SideMark } from '../render/dieRenderer.ts';
@@ -36,6 +37,12 @@ export function initSettings(back: () => void, app: AppVersion): void {
     const lang = (e.target as HTMLSelectElement).value as Lang;
     save((s) => (s.lang = lang));
     setLang(lang);
+    showControl();
+  });
+  $<HTMLSelectElement>('control-select').addEventListener('change', (e) => {
+    const control = (e.target as HTMLSelectElement).value as ControlMode;
+    save((s) => (s.control = control));
+    showControl();
   });
   $('settings-nick-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -76,6 +83,13 @@ export function initSettings(back: () => void, app: AppVersion): void {
   });
 }
 
+/** 選んでいる操作と、その説明 */
+function showControl(): void {
+  const { control } = load();
+  $<HTMLSelectElement>('control-select').value = control;
+  $('control-note').textContent = t(control === 'blank' ? 'controlBlankNote' : 'controlDiceNote');
+}
+
 function showLook(): void {
   const { look } = load();
   $<HTMLSelectElement>('look-side').value = look.side;
@@ -102,6 +116,7 @@ function drawLookPreview(): void {
 export function showSettings(lang: Lang): void {
   const s = load();
   $<HTMLSelectElement>('lang-select').value = lang;
+  showControl();
   $<HTMLInputElement>('settings-nick').value = s.nickname ?? '';
   $('settings-nick-status').textContent = '';
   $('device-id').textContent = s.deviceId.slice(0, 8);

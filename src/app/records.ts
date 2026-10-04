@@ -4,6 +4,7 @@ import type { Rule, Size } from '../core/constants.ts';
 import type { SolveLog } from '../core/replay.ts';
 import { HARD_MODE, LOOK_LAB } from './flags.ts';
 import type { Lang } from './i18n/index.ts';
+import { CONTROL_MODES, type ControlMode } from './input/gestures.ts';
 import { PLAIN_LOOK, type BoardLook } from './render/boardView.ts';
 import {
   ONE_FIGURES,
@@ -38,6 +39,10 @@ export interface Store {
   look: DieLook;
   /** look を保存したときの、既定の見た目の版(LOOK_REV) */
   lookRev: number;
+  /** 操作の種類: blank = 空きマスを指で動かす(既定)、dice = スワイプでサイコロを動かす(これまでの操作) */
+  control: ControlMode;
+  /** 操作が変わったことの知らせを、まだ出していない(これまでの版から使っている人に、一度だけ出す) */
+  controlNotice: boolean;
 }
 
 const KEY = 'diceroll.v1';
@@ -82,6 +87,8 @@ function freshStore(): Store {
     hardStats: { '3': emptyStats(), '4': emptyStats() },
     look: { ...DEFAULT_LOOK },
     lookRev: LOOK_REV,
+    control: 'blank',
+    controlNotice: false,
   };
 }
 
@@ -102,6 +109,10 @@ export function load(): Store {
     if (memory.rule !== 'aligned') memory.rule = 'ones';
     memory.look = parsed?.lookRev === LOOK_REV ? normalizeLook(memory.look) : { ...DEFAULT_LOOK };
     memory.lookRev = LOOK_REV;
+    // 操作の種類を選ぶ前の版から使っている人には、操作が変わったことを一度だけ知らせる
+    if (parsed && parsed.v === 1 && parsed.deviceId && parsed.control === undefined)
+      memory.controlNotice = true;
+    if (!CONTROL_MODES.includes(memory.control)) memory.control = 'blank';
     localStorage.setItem(KEY, JSON.stringify(memory));
   } catch {
     persistent = false;

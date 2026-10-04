@@ -340,6 +340,10 @@ code {
 .result-actions .btn.primary {
   grid-column: 1 / -1;
 }
+/* ボタンを縦に並べる(文言の長いボタンが2つのとき) */
+.result-actions.stacked {
+  grid-template-columns: 1fr;
+}
 .nick-form {
   display: flex;
   flex-direction: column;

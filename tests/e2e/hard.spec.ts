@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures.ts';
 import { alignedExample } from '../../src/core/aligned.ts';
 import { applyMove, decodeBoard, dieKind, encodeBoard } from '../../src/core/board.ts';
 import type { Move } from '../../src/core/dice.ts';

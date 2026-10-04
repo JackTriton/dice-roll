@@ -12,7 +12,7 @@ import { BOTTOM, EAST, NORTH, ONE_DIR, SOUTH, WEST } from '../../core/dice.ts';
 import { ONE_OFF_FORMULAS, formulaBoard } from '../../core/tutorial.ts';
 import { HARD_MODE } from '../flags.ts';
 import { t, type MessageKey } from '../i18n/index.ts';
-import { hardLook, lookFor } from '../records.ts';
+import { hardLook, load, lookFor } from '../records.ts';
 import { BOARD_PALETTE, PLAIN_LOOK, drawBoard, type BoardLook } from '../render/boardView.ts';
 import { drawDie } from '../render/dieRenderer.ts';
 import { ReplayTimeline } from '../render/frame.ts';
@@ -83,6 +83,12 @@ export function initHowto(nav: { back(): void; tutorial(): void }): void {
 
 export function showHowto(): void {
   showScreen('howto');
+  // 操作の説明と、手順の矢印の意味は、選んでいる操作に合わせる
+  const blank = load().control === 'blank';
+  $('rule-1').textContent = t(blank ? 'rule1Blank' : 'rule1');
+  $('rule-6').textContent = t(blank ? 'rule6Blank' : 'rule6');
+  for (const el of document.querySelectorAll<HTMLElement>('.arrows-note'))
+    el.textContent = t(blank ? 'arrowsBlank' : 'arrowsDice');
   animateDemo();
   renderTips();
   renderHard();

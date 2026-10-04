@@ -70,14 +70,18 @@ export function initPlay(n: PlayNav): void {
   nav = n;
   view = new BoardView($<HTMLCanvasElement>('board'));
   attachGestures($('board-wrap'), {
+    control: () => load().control,
     threshold: () => view.cellPx(session?.info.size ?? 3) * SWIPE_RATIO,
     cellAt: (x, y) => view.cellAt(x, y, session?.info.size ?? 3),
+    cellPos: (x, y) => view.cellPos(x, y, session?.info.size ?? 3),
+    blank: () => (session ? { size: session.board.size, blank: session.board.blank } : null),
     onMove: (m, time) => handleMoves([m], time),
     onTap: (cell, time) => session && handleMoves(tapToMoves(session.board, cell), time),
+    onBlankTo: (cell, time) => session && handleMoves(tapToMoves(session.board, cell), time),
   });
   window.addEventListener('keydown', (e) => {
     if (activeScreen() !== 'play') return;
-    const m = keyToMove(e.key);
+    const m = keyToMove(e.key, load().control);
     if (m && $('result').hidden) {
       e.preventDefault();
       handleMoves([m], performance.now());
@@ -203,7 +207,9 @@ export function startTutorial(index: number): void {
   showScreen('play');
   const p = TUTORIAL[index];
   begin({ size: 3, rule: 'ones', mode: 'tutorial', scrambleId: null }, tutorialBoard(p));
-  $('play-hint').textContent = `${t('tutorialN', { n: index + 1 })} — ${t(p.hint)}`;
+  // 最初の練習問題の説明は、操作に合わせる
+  const hint = p.hint === 'tut1' && load().control === 'blank' ? 'tut1Blank' : p.hint;
+  $('play-hint').textContent = `${t('tutorialN', { n: index + 1 })} — ${t(hint)}`;
   $('timer').textContent = '';
 }
 

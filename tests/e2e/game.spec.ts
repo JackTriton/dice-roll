@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.ts';
 import { KEY, session, openApp, solutionFor, swipe } from './helpers.ts';
 
 // ランキング API につないだビルド(E2E_API)では、練習モード前提のこのファイルは飛ばす
