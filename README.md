@@ -190,6 +190,8 @@ npx wrangler d1 execute dice-roll --remote -c api/wrangler.toml \
 - `src/core/constants.ts` の `MIN_AVG_GESTURE_MS`(1操作あたりの平均間隔の下限、初期値 60ms)。
 - 速い人の正当な記録が `too_fast` で弾かれていたら(上の `rejects` で確認)、値を下げてデプロイし直します(`npm run deploy:api` と Pages の両方)。
 - ボットによる自動操作は完全には防げません。不自然な記録は上のコマンドで削除してください。
+- ランキングでは、ソルバー(手順を計算するプログラム)の使用を禁止しています(ランキングの画面と「遊び方」に表示)。動かす前に考える時間は、問題にしません(計測は最初の1手から)。
+- このリポジトリのソルバー(`tools/lib/solverAligned.ts`)の解を入力した記録は、見分けられます: 挑戦の盤面(`attempts.scramble`)をソルバーにかけた出力と、送られてきた手順(`attempts.moves`)を比べます。
 
 ## 名前を変えるとき
 

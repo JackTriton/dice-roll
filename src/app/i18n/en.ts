@@ -66,6 +66,8 @@ export const en: Messages = {
   rankingUnavailable: 'The ranking is paused (you can still practice).',
   rankingOffline: "You're offline, so the ranking can't be shown.",
   rankingDisabled: 'The ranking is not available on this site.',
+  rankingNoSolver:
+    'Solvers (programs that work out the moves) are not allowed. Records made with one will be removed.',
   you: 'You',
   yourRank: 'Your rank: #{rank} ({time}s)',
   notRanked: "You're not on the ranking yet.",
@@ -79,6 +81,8 @@ export const en: Messages = {
   rule5: 'The timer starts with your first roll.',
   rule6:
     'Tap a die in the same row or column as the empty cell to roll several at once. Arrow keys work on PC.',
+  rule7:
+    'In the ranking, solvers (programs that work out the moves) are not allowed. Records made with one will be removed.',
   tutorialStart: 'Try the practice puzzles',
   tutorialN: 'Practice {n}/3',
   tut1: 'The left die has its 1 facing left. Swipe right to roll it…',

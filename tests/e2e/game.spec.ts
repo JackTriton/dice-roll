@@ -12,6 +12,7 @@ test.describe('game', () => {
     await expect(page.locator('#play-mode')).toHaveText('練習');
     await page.click('#btn-retire');
     await page.click('#btn-howto');
+    await expect(page.locator('#screen-howto li[data-i18n="rule7"]')).toContainText('ソルバー');
     await page.click('#btn-tutorial');
     await expect(page.locator('#play-mode')).toHaveText('チュートリアル');
     await swipe(page, 'R');

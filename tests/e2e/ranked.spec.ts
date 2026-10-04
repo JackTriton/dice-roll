@@ -26,6 +26,7 @@ test('a ranked solve is verified by the server and appears on the ranking', asyn
   const mine = page.locator('#ranking-list li.me');
   await expect(mine).toContainText(nick);
   await expect(page.locator('#ranking-me')).toContainText('あなたの順位');
+  await expect(page.locator('#ranking-rule')).toContainText('ソルバー');
 });
 
 test('a nickname saved only on the device is registered when the solve is submitted', async ({ page }) => {
